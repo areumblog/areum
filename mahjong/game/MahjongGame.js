@@ -275,7 +275,7 @@ function calculateFaan(hand, melds, seatWind, prevailingWind, selfDrawn, lastTil
   const allChows = sets.length > 0 && sets.every(s => s.type === 'chow');
   if (allChows && pair && !isHonorTile(pair.tiles[0]) && isFullyConcealed) {
     faan += 1;
-    fanDetails.push('All Chows / Concealed (1 faan)');
+    fanDetails.push('All Chows/Serngs / Concealed (1 faan)');
   }
 
   // All Pongs (對對糊)
@@ -897,7 +897,7 @@ class MahjongGame {
         });
         this.currentPlayer = bestClaim.playerIndex;
         this.hands[bestClaim.playerIndex] = sortTiles(this.hands[bestClaim.playerIndex]);
-        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Chow on ${this.getTileDisplayName(tile)}!`);
+        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Chow/Serng on ${this.getTileDisplayName(tile)}!`);
         return {
           action: 'meld_made',
           meldType: 'chow',

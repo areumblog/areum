@@ -630,6 +630,6 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Sparrow Mahjong Club running on port ${PORT}`);
+  console.log(`Sparrow Social Online Mahjong Club running on port ${PORT}`);
   console.log(`Open http://localhost:${PORT} in your browser`);
 });

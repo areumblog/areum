@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sparrow Mahjong Club - Table</title>
+    <title>Sparrow Social Online Mahjong Club - Table</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -719,6 +719,71 @@
         }
         .spectator-banner.show { display: block; }
 
+        /* Teaching mode tooltip */
+        .teach-panel {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 13, 0.95);
+            border: 1px solid var(--gold);
+            padding: 14px 22px;
+            max-width: 520px;
+            width: 90%;
+            z-index: 400;
+            text-align: center;
+            display: none;
+            animation: teachFadeIn 0.3s ease;
+        }
+        .teach-panel.show { display: block; }
+        .teach-panel .teach-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 13px;
+            color: var(--gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .teach-panel .teach-text {
+            font-size: 13px;
+            color: var(--cream);
+            line-height: 1.6;
+        }
+        @keyframes teachFadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .teach-toggle {
+            padding: 6px 16px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            border: 1px solid var(--emerald);
+            background: var(--emerald-dark);
+            color: var(--ivory);
+            transition: all 0.3s;
+        }
+        .teach-toggle.active {
+            background: var(--emerald);
+            border-color: var(--gold);
+            color: var(--gold-light);
+        }
+        .teach-toggle:hover { background: var(--emerald); }
+
+        /* English label on tiles */
+        .tile .tile-eng {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 7px;
+            font-weight: 600;
+            color: #555;
+            letter-spacing: 0.3px;
+            line-height: 1;
+            margin-top: 1px;
+        }
+        .tile-small .tile-eng { font-size: 6px; }
+
         /* Responsive */
         @media (max-width: 900px) {
             .sidebar { width: 220px; }
@@ -741,6 +806,7 @@
             <span class="wall-count" id="wallCount">Wall: --</span>
         </div>
         <div class="top-bar-right">
+            <button class="teach-toggle" id="teachToggle" onclick="toggleTeaching()">Teach Me</button>
             <button class="btn-sm" onclick="window.location.href='rules.html'" title="Rules">Rules</button>
             <button class="btn-sm" onclick="window.location.href='/'">Leave</button>
         </div>
@@ -829,6 +895,12 @@
                 <button class="btn-gold" style="margin-top:30px;" onclick="nextRound()">Next Round</button>
             </div>
 
+            <!-- Teaching mode panel -->
+            <div class="teach-panel" id="teachPanel">
+                <div class="teach-title">Teaching Mode</div>
+                <div class="teach-text" id="teachText">Welcome! Teaching mode will explain each step as the game progresses.</div>
+            </div>
+
             <!-- Draw game overlay -->
             <div class="win-overlay" id="drawOverlay">
                 <h2>Draw</h2>
@@ -874,9 +946,40 @@
     }
 
     const WIND_CHARS = { east: '東', south: '南', west: '西', north: '北' };
+    const WIND_ENG = { east: 'E', south: 'S', west: 'W', north: 'N' };
+    const WIND_ENG_FULL = { east: 'East', south: 'South', west: 'West', north: 'North' };
     const DRAGON_CHARS = { red: '中', green: '發', white: '白' };
+    const DRAGON_ENG = { red: 'Red', green: 'Green', white: 'White' };
     const FLOWER_CHARS = { plum: '梅', orchid: '蘭', chrysanthemum: '菊', bamboo_flower: '竹' };
+    const FLOWER_ENG = { plum: 'Plum', orchid: 'Orchid', chrysanthemum: 'Mum', bamboo_flower: 'Bamboo' };
     const SEASON_CHARS = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
+    const SEASON_ENG = { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' };
+
+    // Teaching mode state
+    let teachingMode = false;
+    let teachTimer = null;
+
+    function toggleTeaching() {
+        teachingMode = !teachingMode;
+        const btn = document.getElementById('teachToggle');
+        const panel = document.getElementById('teachPanel');
+        btn.classList.toggle('active', teachingMode);
+        if (teachingMode) {
+            showTeachMessage('Teaching Mode ON', 'Welcome! I\'ll explain what\'s happening at each step. Mahjong is a 4-player tile game. Your goal: build a winning hand of 4 sets + 1 pair (14 tiles). Sets can be runs of 3 in a suit (Chow/Serng) or 3 identical tiles (Pong). Watch the tips as the game progresses!');
+        } else {
+            panel.classList.remove('show');
+        }
+    }
+
+    function showTeachMessage(title, text, duration = 12000) {
+        if (!teachingMode) return;
+        const panel = document.getElementById('teachPanel');
+        document.getElementById('teachText').innerHTML = text;
+        panel.querySelector('.teach-title').textContent = title;
+        panel.classList.add('show');
+        if (teachTimer) clearTimeout(teachTimer);
+        teachTimer = setTimeout(() => panel.classList.remove('show'), duration);
+    }
 
     let gameState = null;
     let selectedTile = null;
@@ -895,7 +998,7 @@
         }
     });
 
-    // Tile rendering
+    // Tile rendering with English translations
     function renderTile(tile, extraClass = '') {
         const div = document.createElement('div');
         div.className = `tile ${tile.suit} ${extraClass}`;
@@ -904,8 +1007,8 @@
 
         const valDiv = document.createElement('div');
         valDiv.className = 'tile-value';
-        const suitDiv = document.createElement('div');
-        suitDiv.className = 'tile-suit';
+        const engDiv = document.createElement('div');
+        engDiv.className = 'tile-eng';
 
         if (tile.suit === 'dots') {
             const dotsDiv = document.createElement('div');
@@ -917,8 +1020,8 @@
                 dotsDiv.appendChild(dot);
             }
             div.appendChild(dotsDiv);
-            suitDiv.textContent = tile.value + '筒';
-            div.appendChild(suitDiv);
+            engDiv.textContent = tile.value + ' Dot';
+            div.appendChild(engDiv);
         } else if (tile.suit === 'bamboo') {
             if (tile.value === 1) {
                 valDiv.textContent = '🐦';
@@ -934,29 +1037,37 @@
                 }
                 div.appendChild(bamDiv);
             }
-            suitDiv.textContent = tile.value + '索';
-            div.appendChild(suitDiv);
+            engDiv.textContent = tile.value + ' Bam';
+            div.appendChild(engDiv);
         } else if (tile.suit === 'characters') {
             const chars = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
             valDiv.textContent = chars[tile.value] || tile.value;
             div.appendChild(valDiv);
-            suitDiv.textContent = '萬';
-            suitDiv.style.color = '#C62828';
-            div.appendChild(suitDiv);
+            engDiv.textContent = tile.value + ' Wan';
+            engDiv.style.color = '#C62828';
+            div.appendChild(engDiv);
         } else if (tile.suit === 'winds') {
             valDiv.textContent = WIND_CHARS[tile.value] || tile.value;
             div.appendChild(valDiv);
+            engDiv.textContent = WIND_ENG_FULL[tile.value] || tile.value;
+            div.appendChild(engDiv);
         } else if (tile.suit === 'dragons') {
             valDiv.textContent = DRAGON_CHARS[tile.value] || tile.value;
             div.appendChild(valDiv);
+            engDiv.textContent = DRAGON_ENG[tile.value] || tile.value;
+            div.appendChild(engDiv);
         } else if (tile.suit === 'flowers') {
             valDiv.textContent = FLOWER_CHARS[tile.value] || tile.value;
             valDiv.style.color = '#E91E63';
             div.appendChild(valDiv);
+            engDiv.textContent = FLOWER_ENG[tile.value] || tile.value;
+            div.appendChild(engDiv);
         } else if (tile.suit === 'seasons') {
             valDiv.textContent = SEASON_CHARS[tile.value] || tile.value;
             valDiv.style.color = '#FF9800';
             div.appendChild(valDiv);
+            engDiv.textContent = SEASON_ENG[tile.value] || tile.value;
+            div.appendChild(engDiv);
         }
 
         return div;
@@ -971,6 +1082,7 @@
     function renderFlowerTile(tile) {
         const div = document.createElement('div');
         div.className = 'flower-tile';
+        div.title = tile.suit === 'flowers' ? (FLOWER_ENG[tile.value] || 'Flower') : (SEASON_ENG[tile.value] || 'Season');
         if (tile.suit === 'flowers') div.textContent = FLOWER_CHARS[tile.value] || '花';
         else div.textContent = SEASON_CHARS[tile.value] || '季';
         return div;
@@ -1014,7 +1126,7 @@
             const scoreEl = document.getElementById('score' + posId);
             const infoEl = document.getElementById('info' + posId);
 
-            if (windEl) windEl.textContent = WIND_CHARS[player.seatWind] || '';
+            if (windEl) windEl.textContent = (WIND_ENG[player.seatWind] || '') + ' ' + (WIND_CHARS[player.seatWind] || '');
             if (nameEl) {
                 nameEl.innerHTML = player.name + (player.isAI ? '<span class="ai-tag">[AI]</span>' : '');
             }
@@ -1140,7 +1252,7 @@
             const item = document.createElement('div');
             item.className = 'player-list-item' + (state.currentPlayer === i ? ' current-turn' : '');
             item.innerHTML = `
-                <span class="wind">${WIND_CHARS[p.seatWind] || ''}</span>
+                <span class="wind">${WIND_ENG[p.seatWind] || ''} ${WIND_CHARS[p.seatWind] || ''}</span>
                 <span class="name ${p.isAI ? 'is-ai' : ''}">${p.name}${p.isAI ? ' [AI]' : ''}</span>
                 <span class="score-val">${p.score >= 0 ? '+' : ''}${p.score}</span>
             `;
@@ -1154,7 +1266,7 @@
         for (const entry of log) {
             const div = document.createElement('div');
             div.className = 'log-entry';
-            if (entry.message.includes('wins') || entry.message.includes('started') || entry.message.includes('Kong') || entry.message.includes('Pong')) {
+            if (entry.message.includes('wins') || entry.message.includes('started') || entry.message.includes('Kong') || entry.message.includes('Pong') || entry.message.includes('Chow/Serng')) {
                 div.classList.add('important');
             }
             div.textContent = entry.message;
@@ -1228,6 +1340,7 @@
         document.getElementById('waitingOverlay').classList.add('hidden');
         document.getElementById('winOverlay').classList.remove('show');
         document.getElementById('drawOverlay').classList.remove('show');
+        showTeachMessage('Game Started!', 'Tiles have been dealt! You have 13 tiles (14 if you\'re the dealer). <b>Suits:</b> Dots (circles), Bamboo (sticks), Characters (numbers with 萬). <b>Honors:</b> Winds (E/S/W/N) and Dragons (Red/Green/White). Build 4 sets + 1 pair to win!', 15000);
     });
 
     socket.on('roomUpdate', (info) => {
@@ -1278,6 +1391,15 @@
             hideActions();
         }
 
+        // Teaching mode tips
+        if (data.canWin) {
+            showTeachMessage('You Can Win!', 'Your hand is complete! Click the <b>Mahjong!</b> button to declare your win. This is a self-drawn win (zi mo / 自摸) which earns you bonus points because you completed the hand yourself.');
+        } else if (data.canKong && data.canKong.length > 0) {
+            showTeachMessage('Kong Available', 'You have 4 identical tiles &mdash; you can declare a <b>Kong</b> to score a bonus and draw a replacement tile. Or just discard a tile by clicking on it twice.');
+        } else {
+            showTeachMessage('Your Turn', 'You drew a tile (shown with a gap on the right). Look at your hand and decide which tile to discard. <b>Double-click</b> a tile to discard it, or click once to select then press Space/Enter. Try to keep tiles that form pairs, runs (e.g. 3-4-5), or triplets (e.g. three 7s).');
+        }
+
         // Re-render hand to show drawn tile
         if (gameState && gameState.yourHand) {
             renderMyHand(gameState.yourHand);
@@ -1288,6 +1410,11 @@
         canAct = true;
         drawnTileId = null;
         hideActions();
+        if (data && data.isDealer) {
+            showTeachMessage('Dealer\'s First Turn', 'You are the dealer (East wind) so you start with 14 tiles. Everyone else has 13. Discard one tile to begin the game. <b>Double-click</b> a tile to discard it.');
+        } else {
+            showTeachMessage('Discard a Tile', 'You just claimed a tile and now need to discard one. Choose a tile that doesn\'t fit your hand &mdash; isolated tiles with no matching pairs or sequence neighbors are good candidates.');
+        }
     });
 
     socket.on('claimAvailable', (data) => {
@@ -1332,7 +1459,7 @@
                 const chowTiles = claim.options && claim.options[0] ? claim.options[0] : [];
                 actions.push({
                     type: 'chow',
-                    label: 'Chow',
+                    label: 'Chow/Serng',
                     handler: () => {
                         socket.emit('claimAction', { type: 'chow', tiles: chowTiles });
                         canAct = false;
@@ -1354,14 +1481,28 @@
 
         canAct = true;
         showActions(actions);
+
+        // Teaching mode explanation
+        const claimTypes = data.claims.map(c => c.type);
+        let teachMsg = 'Another player discarded a tile you can use! Your options:<br>';
+        if (claimTypes.includes('win')) teachMsg += '&bull; <b>Mahjong!</b> &mdash; Claim the tile to complete your winning hand<br>';
+        if (claimTypes.includes('kong')) teachMsg += '&bull; <b>Kong</b> &mdash; You have 3 matching tiles; add the discard to make a set of 4<br>';
+        if (claimTypes.includes('pong')) teachMsg += '&bull; <b>Pong</b> &mdash; You have 2 matching tiles; claim the discard to make a triplet<br>';
+        if (claimTypes.includes('chow')) teachMsg += '&bull; <b>Chow/Serng</b> &mdash; The discard completes a run in your hand (e.g. 3-4-5 of the same suit). Only available from the player before you.<br>';
+        teachMsg += '&bull; <b>Pass</b> &mdash; Skip and let the game continue<br>';
+        teachMsg += '<i>Note: Claiming exposes those tiles face-up, giving opponents info about your hand.</i>';
+        showTeachMessage('You Can Claim!', teachMsg, 15000);
     });
 
     socket.on('tileDiscarded', (data) => {
-        // Animation could go here
+        if (data.playerIndex !== mySeat) {
+            showTeachMessage('Tile Discarded', `<b>${data.playerName}</b> discarded a tile. It goes to the discard pool in the center. If you can\'t use it, the next player will draw from the wall.`);
+        }
     });
 
     socket.on('meldMade', (data) => {
-        // Animation could go here
+        const typeNames = { pong: 'Pong (triplet of 3 identical tiles)', kong: 'Kong (set of 4 identical tiles)', chow: 'Chow/Serng (run of 3 consecutive tiles in a suit)' };
+        showTeachMessage('Meld Declared', `<b>${data.playerName}</b> declared a <b>${typeNames[data.meldType] || data.meldType}</b>. These tiles are now exposed face-up on the table. That player must now discard a tile.`);
     });
 
     socket.on('gameWon', (data) => {
@@ -1403,12 +1544,18 @@
 
         canAct = false;
         hideActions();
+
+        showTeachMessage('Round Over!', `<b>${data.winnerName}</b> completed a winning hand! ` +
+            (data.selfDrawn ? 'They won by <b>self-draw</b> (drawing the winning tile themselves). In self-draw wins, all 3 losers pay equally.' :
+            'They won from a <b>discard</b>. The player who discarded the winning tile pays the full amount.') +
+            ` The hand scored <b>${data.faan ? data.faan.faan : 0} faan</b>. Higher faan means more points! Click "Next Round" to continue.`, 20000);
     });
 
     socket.on('gameDraw', () => {
         document.getElementById('drawOverlay').classList.add('show');
         canAct = false;
         hideActions();
+        showTeachMessage('Draw Game', 'The wall ran out of tiles and nobody completed a winning hand. This happens sometimes! No points change hands. Click "Next Round" to play again.', 15000);
     });
 
     socket.on('chatMessage', (data) => {
