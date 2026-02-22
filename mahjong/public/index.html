@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sparrow Mahjong Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-dark: #0A0F0D;
+            --bg-panel: #111A15;
+            --bg-card: #162019;
+            --bg-felt: #1A3A2A;
+            --gold: #C9A96E;
+            --gold-light: #E8D5A3;
+            --gold-dim: #8B7340;
+            --ivory: #F4ECD8;
+            --cream: #E8D5B7;
+            --emerald: #1B6B3A;
+            --emerald-dark: #0F4D28;
+            --burgundy: #6B2D3E;
+            --wood: #2D1F11;
+            --wood-light: #4A3728;
+            --smoke: rgba(200, 200, 200, 0.03);
+            --red-accent: #C44536;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg-dark);
+            color: var(--ivory);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient smoke/fog effect */
+        .smoke-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .smoke-layer {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.06;
+            animation: drift 30s infinite ease-in-out;
+        }
+        .smoke-1 {
+            top: 10%; left: 5%;
+            width: 600px; height: 400px;
+            background: var(--emerald);
+            animation-delay: 0s;
+        }
+        .smoke-2 {
+            bottom: 10%; right: 10%;
+            width: 500px; height: 500px;
+            background: var(--gold);
+            animation-delay: 10s;
+        }
+        .smoke-3 {
+            top: 40%; left: 50%;
+            width: 400px; height: 300px;
+            background: var(--burgundy);
+            animation-delay: 20s;
+        }
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.1); }
+            66% { transform: translate(-30px, 20px) scale(0.95); }
+        }
+
+        /* Art deco border pattern */
+        .deco-border {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold-dim), var(--gold), var(--gold-dim), transparent);
+            margin: 30px auto;
+            max-width: 400px;
+        }
+        .deco-border-wide {
+            max-width: 800px;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0; width: 100%;
+            background: rgba(10, 15, 13, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(201, 169, 110, 0.2);
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold);
+            text-decoration: none;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .logo span {
+            font-weight: 400;
+            font-style: italic;
+            font-size: 16px;
+            color: var(--gold-dim);
+            display: block;
+            letter-spacing: 5px;
+            margin-top: -2px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 35px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: var(--cream);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--gold); }
+
+        /* Hero */
+        .hero {
+            margin-top: 80px;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 40px;
+        }
+        .hero-content { max-width: 800px; }
+
+        /* Mahjong tile decorative element */
+        .hero-tiles {
+            font-size: 48px;
+            letter-spacing: 15px;
+            margin-bottom: 30px;
+            opacity: 0.7;
+            color: var(--gold);
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(48px, 10vw, 96px);
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 6px;
+            line-height: 1.1;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .hero-subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--cream);
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .hero-desc {
+            font-size: 14px;
+            color: rgba(232, 213, 183, 0.6);
+            line-height: 1.8;
+            max-width: 500px;
+            margin: 0 auto 40px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn {
+            padding: 16px 45px;
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            border: 1px solid var(--gold);
+            transition: all 0.4s;
+            display: inline-block;
+        }
+        .btn-gold {
+            background: var(--gold);
+            color: var(--bg-dark);
+        }
+        .btn-gold:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(201, 169, 110, 0.3);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--gold);
+        }
+        .btn-outline:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Lobby Section */
+        .lobby {
+            padding: 80px 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .lobby-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 400;
+            color: var(--gold);
+            text-align: center;
+            letter-spacing: 4px;
+        }
+        .section-sub {
+            text-align: center;
+            font-size: 13px;
+            color: var(--cream);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+
+        /* Entry Form */
+        .entry-panel {
+            background: linear-gradient(135deg, var(--bg-panel), var(--bg-card));
+            border: 1px solid rgba(201, 169, 110, 0.15);
+            padding: 50px;
+            max-width: 500px;
+            margin: 0 auto 60px;
+        }
+        .entry-panel h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: var(--gold);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            margin-bottom: 8px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(201, 169, 110, 0.2);
+            color: var(--ivory);
+            font-size: 15px;
+            font-family: 'Montserrat', sans-serif;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        .form-group input::placeholder {
+            color: rgba(232, 213, 183, 0.3);
+        }
+        .form-group select option {
+            background: var(--bg-dark);
+            color: var(--ivory);
+        }
+        .btn-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn-row .btn { flex: 1; text-align: center; }
+
+        /* Room List */
+        .room-list {
+            margin-top: 40px;
+        }
+        .room-list h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            color: var(--gold);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .room-card {
+            background: linear-gradient(135deg, var(--bg-panel), var(--bg-card));
+            border: 1px solid rgba(201, 169, 110, 0.1);
+            padding: 20px 25px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .room-card:hover {
+            border-color: var(--gold-dim);
+            transform: translateX(5px);
+        }
+        .room-code {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--gold);
+            letter-spacing: 3px;
+        }
+        .room-info {
+            font-size: 12px;
+            color: var(--cream);
+            opacity: 0.6;
+            letter-spacing: 1px;
+        }
+        .room-status {
+            font-size: 11px;
+            padding: 6px 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid;
+        }
+        .status-waiting {
+            color: var(--gold);
+            border-color: var(--gold-dim);
+        }
+        .status-playing {
+            color: var(--emerald);
+            border-color: var(--emerald);
+        }
+        .no-rooms {
+            text-align: center;
+            color: rgba(232, 213, 183, 0.3);
+            font-size: 14px;
+            padding: 40px;
+            letter-spacing: 1px;
+        }
+
+        /* Join Code */
+        .join-section {
+            max-width: 500px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+        .join-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .join-row input {
+            flex: 1;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(201, 169, 110, 0.2);
+            color: var(--ivory);
+            font-size: 18px;
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .join-row input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        .join-row input::placeholder {
+            color: rgba(232, 213, 183, 0.2);
+            letter-spacing: 3px;
+            font-size: 13px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .features-grid {
+            max-width: 1000px;
+            margin: 40px auto 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        .feature-card {
+            background: linear-gradient(135deg, var(--bg-panel), var(--bg-card));
+            border: 1px solid rgba(201, 169, 110, 0.1);
+            padding: 35px;
+            text-align: center;
+            transition: all 0.4s;
+        }
+        .feature-card:hover {
+            border-color: var(--gold-dim);
+            transform: translateY(-3px);
+        }
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+        .feature-card h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: var(--gold);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        .feature-card p {
+            font-size: 13px;
+            color: rgba(232, 213, 183, 0.5);
+            line-height: 1.7;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(201, 169, 110, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        footer p {
+            font-size: 12px;
+            color: rgba(232, 213, 183, 0.3);
+            letter-spacing: 1px;
+        }
+        footer a {
+            color: var(--gold-dim);
+            text-decoration: none;
+        }
+        footer a:hover { color: var(--gold); }
+
+        /* Notifications */
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            background: var(--bg-panel);
+            border: 1px solid var(--gold-dim);
+            color: var(--ivory);
+            padding: 16px 24px;
+            font-size: 13px;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.4s;
+            max-width: 350px;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast.error { border-color: var(--red-accent); }
+
+        /* Loading state */
+        .connecting {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--gold-dim);
+            font-size: 13px;
+            letter-spacing: 2px;
+        }
+        .connecting.show { display: block; }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero h1 { font-size: 48px; letter-spacing: 3px; }
+            .hero-subtitle { font-size: 16px; }
+            .entry-panel { padding: 30px 20px; }
+            .btn-row { flex-direction: column; }
+            .features-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="smoke-bg">
+        <div class="smoke-layer smoke-1"></div>
+        <div class="smoke-layer smoke-2"></div>
+        <div class="smoke-layer smoke-3"></div>
+    </div>
+
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">Sparrow<span>Mahjong Club</span></a>
+            <ul class="nav-links">
+                <li><a href="#play">Play</a></li>
+                <li><a href="rules.html">Rules</a></li>
+                <li><a href="#rooms">Tables</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-tiles">東 南 西 北</div>
+            <h1>Sparrow</h1>
+            <p class="hero-subtitle">Mahjong Club</p>
+            <div class="deco-border"></div>
+            <p class="hero-desc">
+                Step through the hidden door into our parlour. Hong Kong style mahjong
+                played the traditional way &mdash; four winds, 144 tiles, and the clatter
+                of ivory on green felt. Take a seat or watch from the shadows.
+            </p>
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                <a href="#play" class="btn btn-gold">Take a Seat</a>
+                <a href="rules.html" class="btn btn-outline">House Rules</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="lobby" id="play">
+        <h2 class="section-title">The Parlour</h2>
+        <p class="section-sub">Enter the game</p>
+        <div class="deco-border deco-border-wide"></div>
+
+        <div class="entry-panel">
+            <h3>Your Name, Please</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="playerName" placeholder="What shall we call you?" maxlength="20">
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-gold" id="btnCreate" onclick="createRoom()">Open New Table</button>
+            </div>
+        </div>
+
+        <div class="join-section">
+            <p style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-dim);">Have a table code?</p>
+            <div class="join-row">
+                <input type="text" id="joinCode" placeholder="TABLE CODE" maxlength="5">
+                <button class="btn btn-outline" onclick="joinByCode()">Join</button>
+                <button class="btn btn-outline" onclick="spectateByCode()" style="font-size:11px;">Watch</button>
+            </div>
+        </div>
+
+        <div class="room-list" id="rooms">
+            <h3>Open Tables</h3>
+            <div class="deco-border"></div>
+            <div id="roomListContainer">
+                <p class="no-rooms">No tables open yet. Be the first to deal.</p>
+            </div>
+        </div>
+
+        <div class="connecting" id="connecting">Connecting to the parlour...</div>
+    </section>
+
+    <section class="features">
+        <h2 class="section-title">The Experience</h2>
+        <p class="section-sub">What awaits inside</p>
+        <div class="deco-border deco-border-wide"></div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🀄</div>
+                <h4>Hong Kong Rules</h4>
+                <p>Authentic Hong Kong style mahjong with 144 tiles, flowers, seasons, and traditional faan scoring.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎭</div>
+                <h4>Four Winds</h4>
+                <p>Four seats at every table. Play with friends or let our house players fill the empty chairs.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👁</div>
+                <h4>Spectator Gallery</h4>
+                <p>Watch games in progress from the shadows. Study the masters before taking your own seat.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>Sparrow Mahjong Club &mdash; <a href="rules.html">House Rules</a></p>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let playerName = '';
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => t.className = 'toast', 3500);
+        }
+
+        function getName() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) {
+                showToast('Please enter your name first.', true);
+                document.getElementById('playerName').focus();
+                return null;
+            }
+            return name;
+        }
+
+        function createRoom() {
+            const name = getName();
+            if (!name) return;
+            playerName = name;
+            socket.emit('setName', name);
+            socket.emit('createRoom', { name });
+        }
+
+        function joinByCode() {
+            const name = getName();
+            if (!name) return;
+            const code = document.getElementById('joinCode').value.trim().toUpperCase();
+            if (!code) {
+                showToast('Enter a table code.', true);
+                return;
+            }
+            playerName = name;
+            socket.emit('setName', name);
+            socket.emit('joinRoom', { name, code });
+        }
+
+        function spectateByCode() {
+            const name = getName();
+            if (!name) return;
+            const code = document.getElementById('joinCode').value.trim().toUpperCase();
+            if (!code) {
+                showToast('Enter a table code to watch.', true);
+                return;
+            }
+            playerName = name;
+            socket.emit('setName', name);
+            socket.emit('spectateRoom', { name, code });
+        }
+
+        function joinRoom(code) {
+            const name = getName();
+            if (!name) return;
+            playerName = name;
+            socket.emit('setName', name);
+            socket.emit('joinRoom', { name, code });
+        }
+
+        function spectateRoom(code) {
+            const name = getName();
+            if (!name) return;
+            playerName = name;
+            socket.emit('setName', name);
+            socket.emit('spectateRoom', { name, code });
+        }
+
+        socket.on('roomList', (rooms) => {
+            const container = document.getElementById('roomListContainer');
+            if (!rooms || rooms.length === 0) {
+                container.innerHTML = '<p class="no-rooms">No tables open yet. Be the first to deal.</p>';
+                return;
+            }
+            container.innerHTML = rooms.map(r => `
+                <div class="room-card">
+                    <div>
+                        <div class="room-code">${r.code}</div>
+                        <div class="room-info">${r.humanPlayers}/4 players &middot; ${r.spectators} watching</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <span class="room-status ${r.phase === 'waiting' || r.phase === 'finished' ? 'status-waiting' : 'status-playing'}">
+                            ${r.phase === 'waiting' || r.phase === 'finished' ? 'Open' : 'In Play'}
+                        </span>
+                        ${r.humanPlayers < 4 ? `<button class="btn btn-gold" style="padding:8px 16px;font-size:10px;" onclick="event.stopPropagation();joinRoom('${r.code}')">Join</button>` : ''}
+                        <button class="btn btn-outline" style="padding:8px 16px;font-size:10px;" onclick="event.stopPropagation();spectateRoom('${r.code}')">Watch</button>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        socket.on('roomJoined', (data) => {
+            // Navigate to game page
+            window.location.href = `game.html?room=${data.code}&seat=${data.seat}&spectator=${data.isSpectator || false}&name=${encodeURIComponent(playerName)}`;
+        });
+
+        socket.on('error', (data) => {
+            showToast(data.message, true);
+        });
+
+        socket.on('connect', () => {
+            document.getElementById('connecting').classList.remove('show');
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('connecting').classList.add('show');
+        });
+
+        // Enter key shortcuts
+        document.getElementById('playerName').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') createRoom();
+        });
+        document.getElementById('joinCode').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') joinByCode();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Rules - Sparrow Mahjong Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-dark: #0A0F0D;
+            --bg-panel: #111A15;
+            --bg-card: #162019;
+            --gold: #C9A96E;
+            --gold-light: #E8D5A3;
+            --gold-dim: #8B7340;
+            --ivory: #F4ECD8;
+            --cream: #E8D5B7;
+            --emerald: #1B6B3A;
+            --burgundy: #6B2D3E;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg-dark);
+            color: var(--ivory);
+            line-height: 1.8;
+        }
+
+        /* Smoke bg */
+        .smoke-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        .smoke-layer {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.05;
+            animation: drift 30s infinite ease-in-out;
+        }
+        .smoke-1 { top: 10%; left: 5%; width: 600px; height: 400px; background: var(--emerald); }
+        .smoke-2 { bottom: 10%; right: 10%; width: 500px; height: 500px; background: var(--gold); animation-delay: 10s; }
+        @keyframes drift {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(40px,-30px) scale(1.1); }
+            66% { transform: translate(-30px,20px) scale(0.95); }
+        }
+
+        nav {
+            position: fixed; top: 0; width: 100%;
+            background: rgba(10,15,13,0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(201,169,110,0.2);
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: var(--gold);
+            text-decoration: none;
+            letter-spacing: 3px;
+        }
+        .nav-links {
+            display: flex; gap: 30px; list-style: none;
+        }
+        .nav-links a {
+            color: var(--cream);
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--gold); }
+
+        .deco-border {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold-dim), var(--gold), var(--gold-dim), transparent);
+            margin: 30px auto;
+            max-width: 400px;
+        }
+
+        .content {
+            max-width: 860px;
+            margin: 100px auto 60px;
+            padding: 20px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(36px, 8vw, 56px);
+            font-weight: 400;
+            color: var(--gold);
+            text-align: center;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+        }
+        .page-sub {
+            text-align: center;
+            font-size: 13px;
+            color: var(--cream);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+        .section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--gold);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(201,169,110,0.15);
+        }
+        .section h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--gold-light);
+            margin: 25px 0 12px;
+        }
+        .section p {
+            font-size: 14px;
+            color: rgba(232,213,183,0.7);
+            margin-bottom: 15px;
+        }
+        .section ul, .section ol {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        .section li {
+            font-size: 14px;
+            color: rgba(232,213,183,0.65);
+            margin-bottom: 8px;
+        }
+
+        /* Tile examples */
+        .tile-examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .tile-group {
+            background: var(--bg-panel);
+            border: 1px solid rgba(201,169,110,0.1);
+            padding: 15px 20px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .tile-group h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px;
+            color: var(--gold);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .tile-group .tiles-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .mini-tile {
+            width: 32px;
+            height: 42px;
+            background: linear-gradient(180deg, #F5F0E1, #EDE8D8);
+            border: 1px solid #C4BCA8;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .mini-tile .mt-sub {
+            font-size: 7px;
+            color: #888;
+            font-weight: 400;
+        }
+        .mini-tile.red { color: #C62828; }
+        .mini-tile.green { color: #2E7D32; }
+        .mini-tile.blue { color: #1565C0; }
+        .mini-tile.dark { color: #333; }
+
+        /* Scoring table */
+        .scoring-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .scoring-table th, .scoring-table td {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(201,169,110,0.1);
+        }
+        .scoring-table th {
+            color: var(--gold);
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .scoring-table td {
+            color: rgba(232,213,183,0.6);
+        }
+        .scoring-table td:last-child {
+            color: var(--gold-dim);
+            text-align: center;
+        }
+        .scoring-table tr:hover td {
+            color: var(--ivory);
+        }
+
+        .note-box {
+            background: rgba(201,169,110,0.05);
+            border-left: 3px solid var(--gold-dim);
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-size: 13px;
+            color: rgba(232,213,183,0.6);
+        }
+        .note-box strong {
+            color: var(--gold);
+        }
+
+        footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(201,169,110,0.1);
+            position: relative; z-index: 1;
+        }
+        footer p {
+            font-size: 12px;
+            color: rgba(232,213,183,0.3);
+        }
+        footer a { color: var(--gold-dim); text-decoration: none; }
+        footer a:hover { color: var(--gold); }
+
+        @media (max-width: 768px) {
+            .content { padding: 20px; }
+            .nav-links { display: none; }
+            .tile-examples { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="smoke-bg">
+        <div class="smoke-layer smoke-1"></div>
+        <div class="smoke-layer smoke-2"></div>
+    </div>
+
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">Sparrow</a>
+            <ul class="nav-links">
+                <li><a href="/">Lobby</a></li>
+                <li><a href="rules.html">Rules</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="content">
+        <h1 class="page-title">House Rules</h1>
+        <p class="page-sub">Hong Kong Style Mahjong</p>
+        <div class="deco-border"></div>
+
+        <!-- OVERVIEW -->
+        <div class="section">
+            <h2>Overview</h2>
+            <p>
+                Mahjong is a tile-based game that originated in China during the Qing dynasty. The name
+                <em>mahjong</em> (麻雀) translates to "sparrow" &mdash; evoking the chattering sound tiles make
+                as they're shuffled across the table. Here at the Sparrow, we play by <strong>Hong Kong Old Style</strong>
+                rules, the most widely played variant worldwide.
+            </p>
+            <p>
+                Four players sit at the table. The goal is to be the first to assemble a complete hand of
+                <strong>4 sets plus 1 pair</strong> (14 tiles total) by drawing and discarding tiles.
+            </p>
+        </div>
+
+        <!-- THE TILES -->
+        <div class="section">
+            <h2>The Tiles (144 Total)</h2>
+            <p>The game uses 144 tiles divided into several categories:</p>
+
+            <h3>Suited Tiles (108 tiles)</h3>
+            <p>Three suits, each numbered 1&ndash;9, with four copies of each tile.</p>
+
+            <div class="tile-examples">
+                <div class="tile-group">
+                    <h4>Dots (筒子) &mdash; 36 tiles</h4>
+                    <p style="font-size:12px;color:rgba(232,213,183,0.5);margin-bottom:8px;">Circles representing coins</p>
+                    <div class="tiles-row">
+                        <div class="mini-tile blue"><span>1</span><span class="mt-sub">筒</span></div>
+                        <div class="mini-tile blue"><span>2</span><span class="mt-sub">筒</span></div>
+                        <div class="mini-tile blue"><span>3</span><span class="mt-sub">筒</span></div>
+                        <div class="mini-tile blue"><span>...</span></div>
+                        <div class="mini-tile blue"><span>9</span><span class="mt-sub">筒</span></div>
+                    </div>
+                </div>
+                <div class="tile-group">
+                    <h4>Bamboo (索子) &mdash; 36 tiles</h4>
+                    <p style="font-size:12px;color:rgba(232,213,183,0.5);margin-bottom:8px;">Sticks representing strings of coins</p>
+                    <div class="tiles-row">
+                        <div class="mini-tile green"><span>1</span><span class="mt-sub">索</span></div>
+                        <div class="mini-tile green"><span>2</span><span class="mt-sub">索</span></div>
+                        <div class="mini-tile green"><span>3</span><span class="mt-sub">索</span></div>
+                        <div class="mini-tile green"><span>...</span></div>
+                        <div class="mini-tile green"><span>9</span><span class="mt-sub">索</span></div>
+                    </div>
+                </div>
+                <div class="tile-group">
+                    <h4>Characters (萬子) &mdash; 36 tiles</h4>
+                    <p style="font-size:12px;color:rgba(232,213,183,0.5);margin-bottom:8px;">Chinese numerals with 萬 (ten thousand)</p>
+                    <div class="tiles-row">
+                        <div class="mini-tile red"><span>一</span><span class="mt-sub">萬</span></div>
+                        <div class="mini-tile red"><span>二</span><span class="mt-sub">萬</span></div>
+                        <div class="mini-tile red"><span>三</span><span class="mt-sub">萬</span></div>
+                        <div class="mini-tile red"><span>...</span></div>
+                        <div class="mini-tile red"><span>九</span><span class="mt-sub">萬</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Honor Tiles (28 tiles)</h3>
+            <div class="tile-examples">
+                <div class="tile-group">
+                    <h4>Winds (風牌) &mdash; 16 tiles</h4>
+                    <p style="font-size:12px;color:rgba(232,213,183,0.5);margin-bottom:8px;">Four of each wind direction</p>
+                    <div class="tiles-row">
+                        <div class="mini-tile dark"><span>東</span><span class="mt-sub">East</span></div>
+                        <div class="mini-tile dark"><span>南</span><span class="mt-sub">South</span></div>
+                        <div class="mini-tile dark"><span>西</span><span class="mt-sub">West</span></div>
+                        <div class="mini-tile dark"><span>北</span><span class="mt-sub">North</span></div>
+                    </div>
+                </div>
+                <div class="tile-group">
+                    <h4>Dragons (三元牌) &mdash; 12 tiles</h4>
+                    <p style="font-size:12px;color:rgba(232,213,183,0.5);margin-bottom:8px;">Four of each dragon</p>
+                    <div class="tiles-row">
+                        <div class="mini-tile red"><span>中</span><span class="mt-sub">Red</span></div>
+                        <div class="mini-tile green"><span>發</span><span class="mt-sub">Green</span></div>
+                        <div class="mini-tile blue"><span>白</span><span class="mt-sub">White</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Bonus Tiles (8 tiles)</h3>
+            <div class="tile-examples">
+                <div class="tile-group">
+                    <h4>Flowers (花牌) &mdash; 4 tiles</h4>
+                    <div class="tiles-row">
+                        <div class="mini-tile red"><span>梅</span><span class="mt-sub">Plum</span></div>
+                        <div class="mini-tile red"><span>蘭</span><span class="mt-sub">Orchid</span></div>
+                        <div class="mini-tile red"><span>菊</span><span class="mt-sub">Chrys.</span></div>
+                        <div class="mini-tile red"><span>竹</span><span class="mt-sub">Bamboo</span></div>
+                    </div>
+                </div>
+                <div class="tile-group">
+                    <h4>Seasons (季牌) &mdash; 4 tiles</h4>
+                    <div class="tiles-row">
+                        <div class="mini-tile green"><span>春</span><span class="mt-sub">Spring</span></div>
+                        <div class="mini-tile green"><span>夏</span><span class="mt-sub">Summer</span></div>
+                        <div class="mini-tile green"><span>秋</span><span class="mt-sub">Autumn</span></div>
+                        <div class="mini-tile green"><span>冬</span><span class="mt-sub">Winter</span></div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Flowers and seasons are bonus tiles. When drawn, they are immediately set aside
+                face-up and replaced with a new draw. They contribute bonus faan to your score.
+            </p>
+        </div>
+
+        <!-- GAMEPLAY -->
+        <div class="section">
+            <h2>Gameplay</h2>
+
+            <h3>Setup</h3>
+            <ol>
+                <li>All 144 tiles are shuffled and arranged into a wall.</li>
+                <li>The dealer (East wind) is determined. Play proceeds counter-clockwise: East &rarr; South &rarr; West &rarr; North.</li>
+                <li>Each player is dealt <strong>13 tiles</strong>. The dealer receives <strong>14 tiles</strong> and takes the first turn by discarding.</li>
+            </ol>
+
+            <h3>Turn Structure</h3>
+            <ol>
+                <li><strong>Draw</strong> &mdash; Take one tile from the wall.</li>
+                <li><strong>Declare (optional)</strong> &mdash; Declare a concealed Kong or win (Mahjong).</li>
+                <li><strong>Discard</strong> &mdash; Place one tile face-up in the discard pool.</li>
+            </ol>
+
+            <h3>Claiming Discards</h3>
+            <p>After a player discards, other players may claim the discarded tile, in this priority order:</p>
+            <ol>
+                <li><strong>Win (Mahjong / 糊)</strong> &mdash; Any player who can complete their hand. Highest priority.</li>
+                <li><strong>Kong (槓) or Pong (碰)</strong> &mdash; Any player with 3 or 2 matching tiles.</li>
+                <li><strong>Chow (上)</strong> &mdash; Only the <em>next player</em> in turn order, to form a sequence.</li>
+            </ol>
+            <p>If multiple players claim, the higher-priority claim wins. If no one claims, the next player draws from the wall.</p>
+
+            <div class="note-box">
+                <strong>Tip:</strong> Claiming a Pong or Chow exposes those tiles face-up on the table.
+                This reveals information to your opponents and may prevent you from earning bonus faan
+                for a concealed hand. Claim strategically!
+            </div>
+        </div>
+
+        <!-- SETS AND WINNING -->
+        <div class="section">
+            <h2>Sets &amp; Winning</h2>
+
+            <h3>Types of Sets</h3>
+            <ul>
+                <li><strong>Chow (上)</strong> &mdash; Three consecutive tiles in the same suit (e.g., 2-3-4 of Bamboo). Cannot use honor tiles.</li>
+                <li><strong>Pong (碰)</strong> &mdash; Three identical tiles (e.g., three West wind tiles).</li>
+                <li><strong>Kong (槓)</strong> &mdash; Four identical tiles. Declared explicitly and replaced with a wall draw.</li>
+                <li><strong>Pair (眼/將)</strong> &mdash; Two identical tiles. Every winning hand needs exactly one pair.</li>
+            </ul>
+
+            <h3>Standard Winning Hand</h3>
+            <p>
+                A standard winning hand consists of <strong>4 sets + 1 pair = 14 tiles</strong>.
+                Sets can be any combination of Chows, Pongs, and Kongs. You need exactly one pair.
+            </p>
+
+            <h3>Ways to Win</h3>
+            <ul>
+                <li><strong>Self-Drawn (自摸)</strong> &mdash; Complete your hand by drawing from the wall. Awards 1 bonus faan.</li>
+                <li><strong>Discard Win</strong> &mdash; Complete your hand using another player's discard.</li>
+            </ul>
+
+            <h3>Special Hands</h3>
+            <ul>
+                <li><strong>Thirteen Orphans (十三幺)</strong> &mdash; One of each: 1 &amp; 9 of all three suits, all four winds,
+                    all three dragons, plus one duplicate. A limit hand (13 faan).</li>
+                <li><strong>Seven Pairs (七對子)</strong> &mdash; Seven distinct pairs. Worth 4 faan.</li>
+            </ul>
+        </div>
+
+        <!-- KONG RULES -->
+        <div class="section">
+            <h2>Kong Rules</h2>
+            <p>There are three types of Kong:</p>
+            <ul>
+                <li><strong>Exposed Kong</strong> &mdash; Claim a discard when you hold three matching tiles. All four tiles are shown.</li>
+                <li><strong>Concealed Kong</strong> &mdash; Declare during your turn when you hold four matching tiles in your hand.</li>
+                <li><strong>Added Kong</strong> &mdash; Add the fourth tile to an existing exposed Pong during your turn.</li>
+            </ul>
+            <p>After any Kong, draw a replacement tile from the dead wall. Winning on a Kong replacement
+                tile earns bonus faan.</p>
+
+            <div class="note-box">
+                <strong>Robbing the Kong:</strong> When a player adds a tile to make an Added Kong,
+                any other player may "rob" that tile to complete a winning hand. This also earns bonus faan.
+            </div>
+        </div>
+
+        <!-- SCORING -->
+        <div class="section">
+            <h2>Scoring (Faan Table)</h2>
+            <p>
+                Hong Kong Mahjong uses the <strong>faan</strong> (番) system to score hands.
+                Each pattern or condition adds faan to your total. Payment is calculated as 2<sup>faan</sup>.
+            </p>
+
+            <table class="scoring-table">
+                <thead>
+                    <tr>
+                        <th>Pattern</th>
+                        <th>Description</th>
+                        <th>Faan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Self-Drawn (自摸)</td>
+                        <td>Win by drawing from the wall</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Concealed Hand (門前清)</td>
+                        <td>No exposed melds, self-drawn win</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>All Chows (平糊)</td>
+                        <td>All sets are chows, concealed hand, non-honor pair</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Dragon Pong/Kong</td>
+                        <td>Pong or Kong of any dragon tile (中, 發, or 白)</td>
+                        <td>1 each</td>
+                    </tr>
+                    <tr>
+                        <td>Seat Wind (門風)</td>
+                        <td>Pong or Kong of your seat wind</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Prevailing Wind (圈風)</td>
+                        <td>Pong or Kong of the round's prevailing wind</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>All Pongs (對對糊)</td>
+                        <td>All four sets are Pongs or Kongs</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>Mixed One Suit (混一色)</td>
+                        <td>One suit plus honor tiles only</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>Seven Pairs (七對子)</td>
+                        <td>Seven pairs (special hand)</td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td>Small Three Dragons (小三元)</td>
+                        <td>Two dragon Pongs/Kongs + dragon pair</td>
+                        <td>5</td>
+                    </tr>
+                    <tr>
+                        <td>Small Four Winds (小四喜)</td>
+                        <td>Three wind Pongs/Kongs + wind pair</td>
+                        <td>6</td>
+                    </tr>
+                    <tr>
+                        <td>Pure One Suit (清一色)</td>
+                        <td>Only one suit, no honors</td>
+                        <td>7</td>
+                    </tr>
+                    <tr>
+                        <td>Big Three Dragons (大三元)</td>
+                        <td>Pong/Kong of all three dragons</td>
+                        <td>Limit</td>
+                    </tr>
+                    <tr>
+                        <td>Big Four Winds (大四喜)</td>
+                        <td>Pong/Kong of all four winds</td>
+                        <td>Limit</td>
+                    </tr>
+                    <tr>
+                        <td>All Honors (字一色)</td>
+                        <td>Hand composed entirely of honor tiles</td>
+                        <td>Limit</td>
+                    </tr>
+                    <tr>
+                        <td>Thirteen Orphans (十三幺)</td>
+                        <td>One each of all terminals and honors + one duplicate</td>
+                        <td>Limit (13)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Bonus Faan</h3>
+            <table class="scoring-table">
+                <thead>
+                    <tr>
+                        <th>Condition</th>
+                        <th>Description</th>
+                        <th>Faan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Matching Flower/Season</td>
+                        <td>Having the flower or season that corresponds to your seat wind</td>
+                        <td>1 each</td>
+                    </tr>
+                    <tr>
+                        <td>Complete Flowers</td>
+                        <td>All four flowers (梅蘭菊竹)</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>Complete Seasons</td>
+                        <td>All four seasons (春夏秋冬)</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>Last Wall Tile</td>
+                        <td>Win on the very last tile from the wall</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Kong Replacement Win</td>
+                        <td>Win on the tile drawn as a Kong replacement</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Robbing the Kong</td>
+                        <td>Win by taking a tile from another player's Added Kong</td>
+                        <td>1</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Payment</h3>
+            <p>
+                The winner's payment is calculated as <strong>2<sup>faan</sup></strong> base points.
+            </p>
+            <ul>
+                <li><strong>Self-drawn win:</strong> Each of the three losers pays the winner equally.</li>
+                <li><strong>Discard win:</strong> The player who discarded the winning tile pays the full amount.</li>
+            </ul>
+        </div>
+
+        <!-- PLAYING ONLINE -->
+        <div class="section">
+            <h2>Playing at the Sparrow</h2>
+
+            <h3>Getting Started</h3>
+            <ol>
+                <li>Enter your name on the lobby page.</li>
+                <li><strong>Open a new table</strong> or <strong>join</strong> an existing one using a table code.</li>
+                <li>When ready, the host clicks <strong>"Deal the Tiles"</strong> to begin.</li>
+                <li>Empty seats are filled by house AI players automatically.</li>
+            </ol>
+
+            <h3>Controls</h3>
+            <ul>
+                <li><strong>Click</strong> a tile to select it. <strong>Double-click</strong> to discard it immediately.</li>
+                <li>Select a tile, then press <strong>Space</strong> or <strong>Enter</strong> to discard.</li>
+                <li>When another player discards, action buttons appear if you can claim (Chow, Pong, Kong, or Win).</li>
+                <li>The <strong>drawn tile</strong> appears with a gap to the right of your hand.</li>
+            </ul>
+
+            <h3>Spectating</h3>
+            <p>
+                Join any table as a spectator to watch the game unfold. Spectators see all public
+                information (discards, exposed melds, game log) but cannot see any player's concealed hand.
+            </p>
+
+            <h3>AI Players</h3>
+            <p>
+                Any seat not occupied by a human player is filled by a house AI. If a human
+                player disconnects mid-game, the AI seamlessly takes over their seat. You can play
+                a full game solo against three AI opponents, or with any mix of human and AI players.
+            </p>
+        </div>
+
+        <!-- ETIQUETTE -->
+        <div class="section">
+            <h2>Table Etiquette</h2>
+            <ul>
+                <li>Play at a reasonable pace. The table is for everyone.</li>
+                <li>Use the chat respectfully. We're all here to enjoy the game.</li>
+                <li>Study the tiles and learn the patterns. The best players see the whole table.</li>
+                <li>Remember: mahjong is a game of skill, patience, and a little bit of luck.</li>
+            </ul>
+
+            <div class="note-box">
+                <strong>"The sparrow that rises earliest catches the best tile."</strong><br>
+                &mdash; Ancient Mahjong Proverb (probably)
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><a href="/">Return to Lobby</a> &mdash; Sparrow Mahjong Club</p>
+    </footer>
+</body>
+</html>
