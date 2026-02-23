@@ -27,7 +27,7 @@ function generateRoomCode() {
   return code;
 }
 
-function createRoom(hostName) {
+function createRoom(hostName, tableName) {
   let code = generateRoomCode();
   while (rooms.has(code)) {
     code = generateRoomCode();
@@ -36,6 +36,7 @@ function createRoom(hostName) {
   const game = new MahjongGame(code);
   const room = {
     code,
+    tableName: (tableName || '').substring(0, 30) || `${hostName}'s Table`,
     game,
     players: [null, null, null, null],
     spectators: [],
@@ -46,6 +47,7 @@ function createRoom(hostName) {
       new AIPlayer(3, 'medium')
     ],
     aiTimers: {},
+    aiDelay: 4000,
     created: Date.now()
   };
 
@@ -60,6 +62,7 @@ function getRoomList() {
     const spectatorCount = room.spectators.length;
     list.push({
       code,
+      tableName: room.tableName,
       humanPlayers: humanCount,
       spectators: spectatorCount,
       phase: room.game.phase,
@@ -93,6 +96,8 @@ function broadcastGameState(room) {
 function broadcastRoomUpdate(room) {
   const info = {
     code: room.code,
+    tableName: room.tableName,
+    aiDelay: room.aiDelay,
     players: room.players.map((p, i) => ({
       seat: i,
       name: p ? p.name : `AI ${WIND_VALUES[i].charAt(0).toUpperCase() + WIND_VALUES[i].slice(1)}`,
@@ -112,14 +117,16 @@ function broadcastRoomUpdate(room) {
   }
 }
 
-function scheduleAIAction(room, seatIndex, delay = 1200) {
+function scheduleAIAction(room, seatIndex, delay) {
+  // Use room's aiDelay setting (minimum 4s), allow override only if higher
+  const effectiveDelay = Math.max(delay || room.aiDelay || 4000, room.aiDelay || 4000);
   if (room.aiTimers[seatIndex]) {
     clearTimeout(room.aiTimers[seatIndex]);
   }
 
   room.aiTimers[seatIndex] = setTimeout(() => {
     processAITurn(room, seatIndex);
-  }, delay);
+  }, effectiveDelay);
 }
 
 function processAITurn(room, seatIndex) {
@@ -358,7 +365,7 @@ io.on('connection', (socket) => {
 
   socket.on('createRoom', (data) => {
     playerName = (data.name || 'Guest').substring(0, 20);
-    const room = createRoom(playerName);
+    const room = createRoom(playerName, data.tableName);
 
     // Host joins seat 0
     currentRoom = room;
@@ -368,7 +375,7 @@ io.on('connection', (socket) => {
     room.game.players[0] = { name: playerName };
     socket.join(room.code);
 
-    socket.emit('roomJoined', { code: room.code, seat: 0 });
+    socket.emit('roomJoined', { code: room.code, seat: 0, tableName: room.tableName });
     broadcastRoomUpdate(room);
     io.emit('roomList', getRoomList());
   });
@@ -399,7 +406,7 @@ io.on('connection', (socket) => {
       room.spectators.push({ socket, name: playerName });
       socket.join(room.code);
 
-      socket.emit('roomJoined', { code: room.code, seat: -1, isSpectator: true });
+      socket.emit('roomJoined', { code: room.code, seat: -1, isSpectator: true, tableName: room.tableName });
       broadcastRoomUpdate(room);
       broadcastGameState(room);
       return;
@@ -412,7 +419,7 @@ io.on('connection', (socket) => {
     room.game.players[seat] = { name: playerName };
     socket.join(room.code);
 
-    socket.emit('roomJoined', { code: room.code, seat });
+    socket.emit('roomJoined', { code: room.code, seat, tableName: room.tableName });
     broadcastRoomUpdate(room);
 
     if (room.game.phase === PHASES.PLAYING) {
@@ -436,7 +443,7 @@ io.on('connection', (socket) => {
     room.spectators.push({ socket, name: playerName });
     socket.join(room.code);
 
-    socket.emit('roomJoined', { code: room.code, seat: -1, isSpectator: true });
+    socket.emit('roomJoined', { code: room.code, seat: -1, isSpectator: true, tableName: room.tableName });
     broadcastRoomUpdate(room);
     broadcastGameState(room);
   });
@@ -563,6 +570,13 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('setAiSpeed', (data) => {
+    if (!currentRoom || isSpectator) return;
+    const delay = Math.max(4000, Math.min(15000, parseInt(data.delay) || 4000));
+    currentRoom.aiDelay = delay;
+    broadcastRoomUpdate(currentRoom);
+  });
+
   socket.on('chatMessage', (data) => {
     if (!currentRoom) return;
     io.to(currentRoom.code).emit('chatMessage', {
@@ -630,6 +644,6 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Sparrow Social Online Mahjong Club running on port ${PORT}`);
+  console.log(`Sparrow Social Club Online Mahjong running on port ${PORT}`);
   console.log(`Open http://localhost:${PORT} in your browser`);
 });

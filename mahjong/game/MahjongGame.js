@@ -275,14 +275,14 @@ function calculateFaan(hand, melds, seatWind, prevailingWind, selfDrawn, lastTil
   const allChows = sets.length > 0 && sets.every(s => s.type === 'chow');
   if (allChows && pair && !isHonorTile(pair.tiles[0]) && isFullyConcealed) {
     faan += 1;
-    fanDetails.push('All Chows/Serngs / Concealed (1 faan)');
+    fanDetails.push('All Soengs / Concealed (1 faan)');
   }
 
   // All Pongs (對對糊)
   const allPongs = sets.length > 0 && sets.every(s => s.type === 'pong' || s.type === 'kong');
   if (allPongs) {
     faan += 3;
-    fanDetails.push('All Pongs (3 faan)');
+    fanDetails.push('All Pungs (3 faan)');
   }
 
   // Mixed One Suit (混一色) - one suit + honors
@@ -349,13 +349,13 @@ function calculateFaan(hand, melds, seatWind, prevailingWind, selfDrawn, lastTil
   // Win on Kong replacement
   if (isKongReplacement) {
     faan += 1;
-    fanDetails.push('Kong Replacement Win (1 faan)');
+    fanDetails.push('Gong Replacement Win (1 faan)');
   }
 
   // Robbing the Kong
   if (isRobbingKong) {
     faan += 1;
-    fanDetails.push('Robbing the Kong (1 faan)');
+    fanDetails.push('Robbing the Gong (1 faan)');
   }
 
   // Flower bonus (calculated separately based on player flowers)
@@ -848,7 +848,7 @@ class MahjongGame {
           source: this.lastDiscardPlayer
         });
         this.currentPlayer = bestClaim.playerIndex;
-        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Kong on ${this.getTileDisplayName(tile)}!`);
+        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Gong on ${this.getTileDisplayName(tile)}!`);
         // Draw replacement tile
         return this.drawReplacementTile(bestClaim.playerIndex);
       }
@@ -870,7 +870,7 @@ class MahjongGame {
         });
         this.currentPlayer = bestClaim.playerIndex;
         this.hands[bestClaim.playerIndex] = sortTiles(this.hands[bestClaim.playerIndex]);
-        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Pong on ${this.getTileDisplayName(tile)}!`);
+        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Pung on ${this.getTileDisplayName(tile)}!`);
         return {
           action: 'meld_made',
           meldType: 'pong',
@@ -897,7 +897,7 @@ class MahjongGame {
         });
         this.currentPlayer = bestClaim.playerIndex;
         this.hands[bestClaim.playerIndex] = sortTiles(this.hands[bestClaim.playerIndex]);
-        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Chow/Serng on ${this.getTileDisplayName(tile)}!`);
+        this.addLog(`${this.getPlayerName(bestClaim.playerIndex)} declared Soeng on ${this.getTileDisplayName(tile)}!`);
         return {
           action: 'meld_made',
           meldType: 'chow',
@@ -927,7 +927,7 @@ class MahjongGame {
     });
 
     this.hands[playerIndex] = sortTiles(this.hands[playerIndex]);
-    this.addLog(`${this.getPlayerName(playerIndex)} declared a concealed Kong!`);
+    this.addLog(`${this.getPlayerName(playerIndex)} declared a concealed Gong!`);
     return this.drawReplacementTile(playerIndex);
   }
 
@@ -962,7 +962,7 @@ class MahjongGame {
     this.melds[playerIndex][meldIndex].type = 'kong';
 
     this.hands[playerIndex] = sortTiles(this.hands[playerIndex]);
-    this.addLog(`${this.getPlayerName(playerIndex)} added to Kong!`);
+    this.addLog(`${this.getPlayerName(playerIndex)} added to Gong!`);
     return this.drawReplacementTile(playerIndex);
   }
 
@@ -1150,6 +1150,7 @@ class MahjongGame {
       roundNumber: this.roundNumber,
       turnNumber: this.turnNumber,
       wallRemaining: this.wall.length,
+      deadWallRemaining: this.deadWall.length,
       lastDiscard: this.lastDiscard,
       lastDiscardPlayer: this.lastDiscardPlayer,
       players,

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sparrow Social Online Mahjong Club</title>
+    <title>Sparrow Social Club Online Mahjong</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -104,21 +104,30 @@
             align-items: center;
         }
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .logo-img {
+            width: 44px;
+            height: 44px;
+        }
+        .logo-text {
             font-family: 'Playfair Display', serif;
             font-size: 28px;
             font-weight: 700;
             color: var(--gold);
-            text-decoration: none;
             letter-spacing: 3px;
             text-transform: uppercase;
         }
-        .logo span {
+        .logo-text span {
             font-weight: 400;
             font-style: italic;
-            font-size: 16px;
+            font-size: 14px;
             color: var(--gold-dim);
             display: block;
-            letter-spacing: 5px;
+            letter-spacing: 4px;
             margin-top: -2px;
         }
         .nav-links {
@@ -507,7 +516,10 @@
 
     <nav>
         <div class="nav-container">
-            <a href="/" class="logo">Sparrow<span>Social Online Mahjong Club</span></a>
+            <a href="/" class="logo">
+                <img src="/images/sparrow-logo.svg" alt="Sparrow" class="logo-img">
+                <div class="logo-text">Sparrow<span>Social Club Online Mahjong</span></div>
+            </a>
             <ul class="nav-links">
                 <li><a href="#play">Play</a></li>
                 <li><a href="rules.html">Rules</a></li>
@@ -518,14 +530,16 @@
 
     <section class="hero">
         <div class="hero-content">
-            <div class="hero-tiles">東 南 西 北</div>
+            <img src="/images/sparrow-logo.svg" alt="Sparrow Social Club" style="width:120px;height:120px;margin-bottom:20px;opacity:0.9;">
             <h1>Sparrow</h1>
-            <p class="hero-subtitle">Social Online Mahjong Club</p>
+            <p class="hero-subtitle">Social Club Online Mahjong</p>
             <div class="deco-border"></div>
             <p class="hero-desc">
-                Step through the hidden door into our parlour. Hong Kong style mahjong
-                played the traditional way &mdash; four winds, 144 tiles, and the clatter
-                of ivory on green felt. Take a seat or watch from the shadows.
+                Step through the hidden door and into our parlour. Hong Kong&ndash;style mahjong,
+                played the classic way &mdash; four winds, 144 tiles, and the familiar clatter
+                of tiles on green felt.<br><br>
+                Take a seat and play, or watch and learn as the game unfolds.
+                Culture. Connection. Community. Fun vibes only.
             </p>
             <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
                 <a href="#play" class="btn btn-gold">Take a Seat</a>
@@ -544,6 +558,10 @@
             <div class="form-group">
                 <label>Name</label>
                 <input type="text" id="playerName" placeholder="What shall we call you?" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label>Table Name (optional)</label>
+                <input type="text" id="tableName" placeholder="Name your table..." maxlength="30">
             </div>
             <div class="btn-row">
                 <button class="btn btn-gold" id="btnCreate" onclick="createRoom()">Open New Table</button>
@@ -599,7 +617,7 @@
     </section>
 
     <footer>
-        <p>Sparrow Social Online Mahjong Club &mdash; <a href="rules.html">House Rules</a></p>
+        <p>Sparrow Social Club Online Mahjong &mdash; <a href="rules.html">House Rules</a></p>
     </footer>
 
     <div class="toast" id="toast"></div>
@@ -630,8 +648,9 @@
             const name = getName();
             if (!name) return;
             playerName = name;
+            const tableName = document.getElementById('tableName').value.trim();
             socket.emit('setName', name);
-            socket.emit('createRoom', { name });
+            socket.emit('createRoom', { name, tableName });
         }
 
         function joinByCode() {
@@ -685,8 +704,8 @@
             container.innerHTML = rooms.map(r => `
                 <div class="room-card">
                     <div>
-                        <div class="room-code">${r.code}</div>
-                        <div class="room-info">${r.humanPlayers}/4 players &middot; ${r.spectators} watching</div>
+                        <div class="room-code">${r.tableName || r.code}</div>
+                        <div class="room-info">${r.code} &middot; ${r.humanPlayers}/4 players &middot; ${r.spectators} watching</div>
                     </div>
                     <div style="display:flex;gap:10px;align-items:center;">
                         <span class="room-status ${r.phase === 'waiting' || r.phase === 'finished' ? 'status-waiting' : 'status-playing'}">
@@ -701,7 +720,7 @@
 
         socket.on('roomJoined', (data) => {
             // Navigate to game page
-            window.location.href = `game.html?room=${data.code}&seat=${data.seat}&spectator=${data.isSpectator || false}&name=${encodeURIComponent(playerName)}`;
+            window.location.href = `game.html?room=${data.code}&seat=${data.seat}&spectator=${data.isSpectator || false}&name=${encodeURIComponent(playerName)}&tableName=${encodeURIComponent(data.tableName || '')}`;
         });
 
         socket.on('error', (data) => {

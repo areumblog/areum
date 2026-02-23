@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>House Rules - Sparrow Social Online Mahjong Club</title>
+    <title>House Rules - Sparrow Social Club Online Mahjong</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -58,16 +58,22 @@
         .nav-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px 40px;
+            padding: 15px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 24px;
-            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
+        }
+        .logo-img { width: 36px; height: 36px; }
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            color: var(--gold);
             letter-spacing: 3px;
         }
         .nav-links {
@@ -272,7 +278,10 @@
 
     <nav>
         <div class="nav-container">
-            <a href="/" class="logo">Sparrow</a>
+            <a href="/" class="logo">
+                <img src="/images/sparrow-logo.svg" alt="Sparrow" class="logo-img">
+                <span class="logo-text">Sparrow</span>
+            </a>
             <ul class="nav-links">
                 <li><a href="/">Lobby</a></li>
                 <li><a href="rules.html">Rules</a></li>
@@ -408,7 +417,7 @@
             <h3>Turn Structure</h3>
             <ol>
                 <li><strong>Draw</strong> &mdash; Take one tile from the wall.</li>
-                <li><strong>Declare (optional)</strong> &mdash; Declare a concealed Kong or win (Mahjong).</li>
+                <li><strong>Declare (optional)</strong> &mdash; Declare a concealed Gong or win (Sik Wu).</li>
                 <li><strong>Discard</strong> &mdash; Place one tile face-up in the discard pool.</li>
             </ol>
 
@@ -416,13 +425,13 @@
             <p>After a player discards, other players may claim the discarded tile, in this priority order:</p>
             <ol>
                 <li><strong>Win (Mahjong / 糊)</strong> &mdash; Any player who can complete their hand. Highest priority.</li>
-                <li><strong>Kong (槓) or Pong (碰)</strong> &mdash; Any player with 3 or 2 matching tiles.</li>
-                <li><strong>Chow/Serng (上)</strong> &mdash; Only the <em>next player</em> in turn order, to form a sequence.</li>
+                <li><strong>Gong (槓) or Pung (碰)</strong> &mdash; Any player with 3 or 2 matching tiles.</li>
+                <li><strong>Soeng (上)</strong> &mdash; Only the <em>next player</em> in turn order, to form a sequence.</li>
             </ol>
             <p>If multiple players claim, the higher-priority claim wins. If no one claims, the next player draws from the wall.</p>
 
             <div class="note-box">
-                <strong>Tip:</strong> Claiming a Pong or Chow/Serng exposes those tiles face-up on the table.
+                <strong>Tip:</strong> Claiming a Pung or Soeng exposes those tiles face-up on the table.
                 This reveals information to your opponents and may prevent you from earning bonus faan
                 for a concealed hand. Claim strategically!
             </div>
@@ -434,16 +443,16 @@
 
             <h3>Types of Sets</h3>
             <ul>
-                <li><strong>Chow/Serng (上)</strong> &mdash; Three consecutive tiles in the same suit (e.g., 2-3-4 of Bamboo). Cannot use honor tiles.</li>
-                <li><strong>Pong (碰)</strong> &mdash; Three identical tiles (e.g., three West wind tiles).</li>
-                <li><strong>Kong (槓)</strong> &mdash; Four identical tiles. Declared explicitly and replaced with a wall draw.</li>
+                <li><strong>Soeng (上)</strong> &mdash; Three consecutive tiles in the same suit (e.g., 2-3-4 of Bamboo). Cannot use honor tiles.</li>
+                <li><strong>Pung (碰)</strong> &mdash; Three identical tiles (e.g., three West wind tiles).</li>
+                <li><strong>Gong (槓)</strong> &mdash; Four identical tiles. Declared explicitly and replaced with a wall draw.</li>
                 <li><strong>Pair (眼/將)</strong> &mdash; Two identical tiles. Every winning hand needs exactly one pair.</li>
             </ul>
 
             <h3>Standard Winning Hand</h3>
             <p>
                 A standard winning hand consists of <strong>4 sets + 1 pair = 14 tiles</strong>.
-                Sets can be any combination of Chows/Serngs, Pongs, and Kongs. You need exactly one pair.
+                Sets can be any combination of Soengs, Pungs, and Gongs. You need exactly one pair.
             </p>
 
             <h3>Ways to Win</h3>
@@ -460,20 +469,20 @@
             </ul>
         </div>
 
-        <!-- KONG RULES -->
+        <!-- GONG RULES -->
         <div class="section">
-            <h2>Kong Rules</h2>
-            <p>There are three types of Kong:</p>
+            <h2>Gong Rules</h2>
+            <p>There are three types of Gong:</p>
             <ul>
-                <li><strong>Exposed Kong</strong> &mdash; Claim a discard when you hold three matching tiles. All four tiles are shown.</li>
-                <li><strong>Concealed Kong</strong> &mdash; Declare during your turn when you hold four matching tiles in your hand.</li>
-                <li><strong>Added Kong</strong> &mdash; Add the fourth tile to an existing exposed Pong during your turn.</li>
+                <li><strong>Exposed Gong</strong> &mdash; Claim a discard when you hold three matching tiles. All four tiles are shown.</li>
+                <li><strong>Concealed Gong</strong> &mdash; Declare during your turn when you hold four matching tiles in your hand.</li>
+                <li><strong>Added Gong</strong> &mdash; Add the fourth tile to an existing exposed Pung during your turn.</li>
             </ul>
-            <p>After any Kong, draw a replacement tile from the dead wall. Winning on a Kong replacement
+            <p>After any Gong, draw a replacement tile from the dead wall. Winning on a Gong replacement
                 tile earns bonus faan.</p>
 
             <div class="note-box">
-                <strong>Robbing the Kong:</strong> When a player adds a tile to make an Added Kong,
+                <strong>Robbing the Gong:</strong> When a player adds a tile to make an Added Gong,
                 any other player may "rob" that tile to complete a winning hand. This also earns bonus faan.
             </div>
         </div>
@@ -506,28 +515,28 @@
                         <td>1</td>
                     </tr>
                     <tr>
-                        <td>All Chows/Serngs (平糊)</td>
-                        <td>All sets are chows/serngs, concealed hand, non-honor pair</td>
+                        <td>All Soengs (平糊)</td>
+                        <td>All sets are soengs, concealed hand, non-honor pair</td>
                         <td>1</td>
                     </tr>
                     <tr>
-                        <td>Dragon Pong/Kong</td>
-                        <td>Pong or Kong of any dragon tile (中, 發, or 白)</td>
+                        <td>Dragon Pung/Gong</td>
+                        <td>Pung or Gong of any dragon tile (中, 發, or 白)</td>
                         <td>1 each</td>
                     </tr>
                     <tr>
                         <td>Seat Wind (門風)</td>
-                        <td>Pong or Kong of your seat wind</td>
+                        <td>Pung or Gong of your seat wind</td>
                         <td>1</td>
                     </tr>
                     <tr>
                         <td>Prevailing Wind (圈風)</td>
-                        <td>Pong or Kong of the round's prevailing wind</td>
+                        <td>Pung or Gong of the round's prevailing wind</td>
                         <td>1</td>
                     </tr>
                     <tr>
-                        <td>All Pongs (對對糊)</td>
-                        <td>All four sets are Pongs or Kongs</td>
+                        <td>All Pungs (對對糊)</td>
+                        <td>All four sets are Pungs or Gongs</td>
                         <td>3</td>
                     </tr>
                     <tr>
@@ -542,12 +551,12 @@
                     </tr>
                     <tr>
                         <td>Small Three Dragons (小三元)</td>
-                        <td>Two dragon Pongs/Kongs + dragon pair</td>
+                        <td>Two dragon Pungs/Gongs + dragon pair</td>
                         <td>5</td>
                     </tr>
                     <tr>
                         <td>Small Four Winds (小四喜)</td>
-                        <td>Three wind Pongs/Kongs + wind pair</td>
+                        <td>Three wind Pungs/Gongs + wind pair</td>
                         <td>6</td>
                     </tr>
                     <tr>
@@ -557,12 +566,12 @@
                     </tr>
                     <tr>
                         <td>Big Three Dragons (大三元)</td>
-                        <td>Pong/Kong of all three dragons</td>
+                        <td>Pung/Gong of all three dragons</td>
                         <td>Limit</td>
                     </tr>
                     <tr>
                         <td>Big Four Winds (大四喜)</td>
-                        <td>Pong/Kong of all four winds</td>
+                        <td>Pung/Gong of all four winds</td>
                         <td>Limit</td>
                     </tr>
                     <tr>
@@ -609,26 +618,17 @@
                         <td>1</td>
                     </tr>
                     <tr>
-                        <td>Kong Replacement Win</td>
-                        <td>Win on the tile drawn as a Kong replacement</td>
+                        <td>Gong Replacement Win</td>
+                        <td>Win on the tile drawn as a Gong replacement</td>
                         <td>1</td>
                     </tr>
                     <tr>
-                        <td>Robbing the Kong</td>
-                        <td>Win by taking a tile from another player's Added Kong</td>
+                        <td>Robbing the Gong</td>
+                        <td>Win by taking a tile from another player's Added Gong</td>
                         <td>1</td>
                     </tr>
                 </tbody>
             </table>
-
-            <h3>Payment</h3>
-            <p>
-                The winner's payment is calculated as <strong>2<sup>faan</sup></strong> base points.
-            </p>
-            <ul>
-                <li><strong>Self-drawn win:</strong> Each of the three losers pays the winner equally.</li>
-                <li><strong>Discard win:</strong> The player who discarded the winning tile pays the full amount.</li>
-            </ul>
         </div>
 
         <!-- PLAYING ONLINE -->
@@ -647,7 +647,7 @@
             <ul>
                 <li><strong>Click</strong> a tile to select it. <strong>Double-click</strong> to discard it immediately.</li>
                 <li>Select a tile, then press <strong>Space</strong> or <strong>Enter</strong> to discard.</li>
-                <li>When another player discards, action buttons appear if you can claim (Chow, Pong, Kong, or Win).</li>
+                <li>When another player discards, action buttons appear if you can claim (Soeng, Pung, Gong, or Win).</li>
                 <li>The <strong>drawn tile</strong> appears with a gap to the right of your hand.</li>
             </ul>
 
@@ -683,7 +683,7 @@
     </div>
 
     <footer>
-        <p><a href="/">Return to Lobby</a> &mdash; Sparrow Social Online Mahjong Club</p>
+        <p><a href="/">Return to Lobby</a> &mdash; Sparrow Social Club Online Mahjong</p>
     </footer>
 </body>
 </html>
