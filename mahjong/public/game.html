@@ -169,8 +169,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 380px;
-            height: 380px;
+            width: 560px;
+            height: 560px;
             z-index: 2;
             pointer-events: none;
         }
@@ -770,22 +770,45 @@
             transform: translateX(-50%);
             background: rgba(10, 15, 13, 0.95);
             border: 1px solid var(--gold);
-            padding: 14px 22px;
+            padding: 0;
             max-width: 520px;
             width: 90%;
             z-index: 400;
             text-align: center;
             display: none;
             animation: teachFadeIn 0.3s ease;
+            border-radius: 4px;
+        }
+        .teach-panel.dragging {
+            animation: none;
+            opacity: 0.9;
         }
         .teach-panel.show { display: block; }
+        .teach-drag-handle {
+            cursor: grab;
+            padding: 8px 22px 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            border-bottom: 1px solid rgba(201, 169, 110, 0.15);
+        }
+        .teach-drag-handle:active { cursor: grabbing; }
+        .teach-drag-grip {
+            font-size: 10px;
+            color: var(--gold-dim);
+            letter-spacing: 1px;
+            opacity: 0.6;
+        }
         .teach-panel .teach-title {
             font-family: 'Playfair Display', serif;
             font-size: 13px;
             color: var(--gold);
             letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 6px;
+        }
+        .teach-body {
+            padding: 10px 22px 14px;
         }
         .teach-panel .teach-text {
             font-size: 13px;
@@ -834,13 +857,13 @@
             .tile-small { width: 28px; height: 36px; }
             .tile-back { width: 36px; height: 48px; }
             .center-area { width: 380px; }
-            .wall-display { width: 300px; height: 300px; }
+            .wall-display { width: 440px; height: 440px; }
         }
         @media (max-width: 700px) {
             .sidebar { display: none; }
             .tile { width: 32px; height: 44px; }
             .center-area { width: 320px; }
-            .wall-display { width: 260px; height: 260px; }
+            .wall-display { width: 380px; height: 380px; }
         }
     </style>
 </head>
@@ -958,10 +981,15 @@
                 <button class="btn-gold" style="margin-top:30px;" onclick="nextRound()">Next Round</button>
             </div>
 
-            <!-- Teaching panel -->
+            <!-- Teaching panel (draggable) -->
             <div class="teach-panel" id="teachPanel">
-                <div class="teach-title">Teaching Mode</div>
-                <div class="teach-text" id="teachText">Welcome! Teaching mode will explain each step as the game progresses.</div>
+                <div class="teach-drag-handle" id="teachDragHandle">
+                    <div class="teach-title" id="teachTitle">Teaching Mode</div>
+                    <span class="teach-drag-grip">&#x2630; drag</span>
+                </div>
+                <div class="teach-body">
+                    <div class="teach-text" id="teachText">Welcome! Teaching mode will explain each step as the game progresses.</div>
+                </div>
             </div>
 
             <!-- Draw game overlay -->
@@ -1038,6 +1066,12 @@
             showTeachMessage('Teaching Mode ON', 'Welcome! I\'ll explain what\'s happening at each step. Mahjong is a 4-player tile game. Your goal: build a winning hand of 4 sets + 1 pair (14 tiles). Sets can be runs of 3 in a suit (Soeng) or 3 identical tiles (Pung). Use the <b>AI Speed</b> slider to control how fast the AI plays. Watch the tips as the game progresses!');
         } else {
             panel.classList.remove('show');
+            // Reset position so it returns to default center on next toggle
+            panel.style.bottom = '120px';
+            panel.style.left = '50%';
+            panel.style.top = '';
+            panel.style.transform = 'translateX(-50%)';
+            window.__teachPanelDragged = false;
         }
     }
 
@@ -1045,11 +1079,70 @@
         if (!teachingMode) return;
         const panel = document.getElementById('teachPanel');
         document.getElementById('teachText').innerHTML = text;
-        panel.querySelector('.teach-title').textContent = title;
+        document.getElementById('teachTitle').textContent = title;
         panel.classList.add('show');
         if (teachTimer) clearTimeout(teachTimer);
         teachTimer = setTimeout(() => panel.classList.remove('show'), duration);
     }
+
+    // ========== DRAGGABLE TEACH PANEL ==========
+    (function() {
+        const panel = document.getElementById('teachPanel');
+        const handle = document.getElementById('teachDragHandle');
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
+        window.__teachPanelDragged = false;
+
+        handle.addEventListener('mousedown', dragStart);
+        handle.addEventListener('touchstart', dragStart, { passive: false });
+
+        function dragStart(e) {
+            e.preventDefault();
+            isDragging = true;
+            panel.classList.add('dragging');
+
+            const pt = e.touches ? e.touches[0] : e;
+
+            // On first drag, switch from bottom/left+transform to top/left positioning
+            if (!window.__teachPanelDragged) {
+                const rect = panel.getBoundingClientRect();
+                panel.style.bottom = 'auto';
+                panel.style.left = rect.left + 'px';
+                panel.style.top = rect.top + 'px';
+                panel.style.transform = 'none';
+                window.__teachPanelDragged = true;
+            }
+
+            startX = pt.clientX;
+            startY = pt.clientY;
+            startLeft = parseInt(panel.style.left) || 0;
+            startTop = parseInt(panel.style.top) || 0;
+
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchmove', dragMove, { passive: false });
+            document.addEventListener('touchend', dragEnd);
+        }
+
+        function dragMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const pt = e.touches ? e.touches[0] : e;
+            const dx = pt.clientX - startX;
+            const dy = pt.clientY - startY;
+            panel.style.left = (startLeft + dx) + 'px';
+            panel.style.top = (startTop + dy) + 'px';
+        }
+
+        function dragEnd() {
+            isDragging = false;
+            panel.classList.remove('dragging');
+            document.removeEventListener('mousemove', dragMove);
+            document.removeEventListener('mouseup', dragEnd);
+            document.removeEventListener('touchmove', dragMove);
+            document.removeEventListener('touchend', dragEnd);
+        }
+    })();
 
     // AI Speed slider
     const aiSpeedSlider = document.getElementById('aiSpeedSlider');
