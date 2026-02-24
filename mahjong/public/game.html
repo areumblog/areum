@@ -170,7 +170,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 560px;
-            height: 560px;
+            height: min(460px, calc(100% - 200px));
             z-index: 2;
             pointer-events: none;
         }
@@ -858,13 +858,13 @@
             .tile-small { width: 28px; height: 36px; }
             .tile-back { width: 36px; height: 48px; }
             .center-area { width: 380px; }
-            .wall-display { width: 440px; height: 440px; }
+            .wall-display { width: 440px; height: min(380px, calc(100% - 180px)); }
         }
         @media (max-width: 700px) {
             .sidebar { display: none; }
             .tile { width: 32px; height: 44px; }
             .center-area { width: 320px; }
-            .wall-display { width: 380px; height: 380px; }
+            .wall-display { width: 380px; height: min(320px, calc(100% - 160px)); }
         }
     </style>
 </head>
