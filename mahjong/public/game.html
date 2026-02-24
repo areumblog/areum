@@ -870,6 +870,25 @@
             /* Prevent double-tap zoom on all interactive elements */
             body { touch-action: manipulation; }
 
+            /* ---- PERFORMANCE: reduce GPU expense ---- */
+            .table-area::before { display: none; }  /* kill grid overlay */
+            .table-border { display: none; }
+            .tile {
+                box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+                transition: transform 0.1s;
+            }
+            .tile-back { box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+            .wall-brick { box-shadow: none; }
+            .wall-brick.stacked { box-shadow: 0 -2px 0 0 #13a050; }
+            .my-hand .tile:hover {
+                transform: none;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+                background: linear-gradient(180deg, var(--tile-face) 0%, #EDE8D8 100%);
+            }
+            .my-hand .tile.selected {
+                box-shadow: 0 4px 8px rgba(201, 169, 110, 0.3);
+            }
+
             /* Sidebar: hidden by default, toggleable via hamburger */
             .sidebar {
                 display: flex;
@@ -1349,6 +1368,27 @@
     let canAct = false;
     let drawnTileId = null;
 
+    // ========== PERFORMANCE: RAF batching & caches ==========
+    let _pendingState = null;
+    let _rafId = null;
+    let _lastWallCount = -1;
+    let _lastDiscardCount = 0;
+    let _lastLogLength = 0;
+    const isMobile = window.matchMedia('(max-width: 700px)').matches;
+
+    function scheduleBoardUpdate(state) {
+        _pendingState = state;
+        if (!_rafId) {
+            _rafId = requestAnimationFrame(() => {
+                _rafId = null;
+                if (_pendingState) {
+                    updateBoard(_pendingState);
+                    _pendingState = null;
+                }
+            });
+        }
+    }
+
     const socket = io();
 
     // Reconnect to room
@@ -1364,8 +1404,12 @@
     // ========== TILE WALL RENDERING ==========
     function renderWall(wallRemaining, deadWallRemaining) {
         const total = (wallRemaining || 0) + (deadWallRemaining || 0);
-        // Each side of the wall gets ~1/4 of remaining tiles (stacked 2 high, so tiles per side = total/4/2 = total/8)
-        const tilesPerSide = Math.ceil(total / 8); // each brick = 2 tiles stacked
+
+        // Skip re-render if wall count unchanged
+        if (total === _lastWallCount) return;
+        _lastWallCount = total;
+
+        const tilesPerSide = Math.ceil(total / 8);
         const sides = ['wallBottom', 'wallRight', 'wallTop', 'wallLeft'];
         let remaining = total;
 
@@ -1373,20 +1417,17 @@
             const sideEl = document.getElementById(sides[s]);
             sideEl.innerHTML = '';
             const count = Math.min(tilesPerSide, Math.ceil(remaining / 2));
+            // On mobile, use a DocumentFragment to batch DOM inserts
+            const frag = document.createDocumentFragment();
             for (let i = 0; i < count && remaining > 0; i++) {
                 const brick = document.createElement('div');
-                brick.className = 'wall-brick';
-                if (remaining >= 2) {
-                    brick.classList.add('stacked');
-                    remaining -= 2;
-                } else {
-                    remaining -= 1;
-                }
-                sideEl.appendChild(brick);
+                brick.className = remaining >= 2 ? 'wall-brick stacked' : 'wall-brick';
+                remaining -= remaining >= 2 ? 2 : 1;
+                frag.appendChild(brick);
             }
+            sideEl.appendChild(frag);
         }
 
-        // Hide wall when empty
         document.getElementById('wallDisplay').style.display = total > 0 ? 'block' : 'none';
     }
 
@@ -1534,23 +1575,33 @@
             // Flowers
             const flowersEl = document.getElementById('flowers' + posId);
             if (flowersEl) {
-                flowersEl.innerHTML = '';
-                for (const f of player.flowers || []) {
-                    flowersEl.appendChild(renderFlowerTile(f));
+                const flowerCount = (player.flowers || []).length;
+                if (flowersEl.children.length !== flowerCount) {
+                    flowersEl.innerHTML = '';
+                    const frag = document.createDocumentFragment();
+                    for (const f of player.flowers || []) {
+                        frag.appendChild(renderFlowerTile(f));
+                    }
+                    flowersEl.appendChild(frag);
                 }
             }
 
             // Melds
             const meldsEl = document.getElementById('melds' + posId);
             if (meldsEl) {
-                meldsEl.innerHTML = '';
-                for (const meld of player.melds || []) {
-                    const group = document.createElement('div');
-                    group.className = 'meld-group';
-                    for (const t of meld.tiles) {
-                        group.appendChild(renderTile(t, 'tile-small'));
+                const meldCount = (player.melds || []).length;
+                if (meldsEl.children.length !== meldCount) {
+                    meldsEl.innerHTML = '';
+                    const frag = document.createDocumentFragment();
+                    for (const meld of player.melds || []) {
+                        const group = document.createElement('div');
+                        group.className = 'meld-group';
+                        for (const t of meld.tiles) {
+                            group.appendChild(renderTile(t, 'tile-small'));
+                        }
+                        frag.appendChild(group);
                     }
-                    meldsEl.appendChild(group);
+                    meldsEl.appendChild(frag);
                 }
             }
 
@@ -1558,9 +1609,14 @@
             if (relSeat !== 0) {
                 const handEl = document.getElementById('hand' + posId);
                 if (handEl) {
-                    handEl.innerHTML = '';
-                    for (let i = 0; i < (player.handSize || 0); i++) {
-                        handEl.appendChild(renderTileBack(true));
+                    const sz = player.handSize || 0;
+                    if (handEl.children.length !== sz) {
+                        handEl.innerHTML = '';
+                        const frag = document.createDocumentFragment();
+                        for (let i = 0; i < sz; i++) {
+                            frag.appendChild(renderTileBack(true));
+                        }
+                        handEl.appendChild(frag);
                     }
                 }
             }
@@ -1574,59 +1630,83 @@
             myHandEl.innerHTML = '<span style="color:var(--gold-dim);font-size:12px;letter-spacing:2px;">SPECTATING</span>';
         }
 
-        // Discard pool - combine all discards
+        // Discard pool - incremental update
         const poolEl = document.getElementById('discardPool');
-        poolEl.innerHTML = '';
         const allDiscards = [];
         for (let i = 0; i < 4; i++) {
             for (const d of (state.players[i].discards || [])) {
                 allDiscards.push({ tile: d, playerIndex: i });
             }
         }
-        for (const d of allDiscards) {
+
+        if (allDiscards.length < _lastDiscardCount) {
+            // New round — full rebuild needed
+            poolEl.innerHTML = '';
+            _lastDiscardCount = 0;
+        }
+
+        // Remove last-discard highlight from previous
+        const prev = poolEl.querySelector('.last-discard');
+        if (prev) prev.classList.remove('last-discard');
+
+        // Only render new discards
+        const frag = document.createDocumentFragment();
+        for (let i = _lastDiscardCount; i < allDiscards.length; i++) {
+            const d = allDiscards[i];
             const tEl = renderTile(d.tile, 'tile-small');
             if (state.lastDiscard && d.tile.id === state.lastDiscard.id) {
                 tEl.classList.add('last-discard');
             }
-            poolEl.appendChild(tEl);
+            frag.appendChild(tEl);
         }
+        poolEl.appendChild(frag);
+        _lastDiscardCount = allDiscards.length;
 
         updatePlayerList(state);
         updateGameLog(state.gameLog || []);
     }
 
+    // Event delegation for hand tiles (set up once)
+    const _myHandEl = document.getElementById('myHand');
+    _myHandEl.addEventListener('click', (e) => {
+        if (!canAct) return;
+        const tileEl = e.target.closest('.tile');
+        if (!tileEl || !tileEl.dataset.tileId) return;
+        const tileId = parseInt(tileEl.dataset.tileId);
+
+        if (selectedTile === tileId) {
+            discardTile(tileId);
+            return;
+        }
+        // Deselect previous
+        const prev = _myHandEl.querySelector('.tile.selected');
+        if (prev) prev.classList.remove('selected');
+        selectedTile = tileId;
+        tileEl.classList.add('selected');
+    });
+    _myHandEl.addEventListener('dblclick', (e) => {
+        if (!canAct) return;
+        const tileEl = e.target.closest('.tile');
+        if (!tileEl || !tileEl.dataset.tileId) return;
+        discardTile(parseInt(tileEl.dataset.tileId));
+    });
+
     function renderMyHand(hand) {
-        const myHandEl = document.getElementById('myHand');
-        myHandEl.innerHTML = '';
+        _myHandEl.innerHTML = '';
         selectedTile = null;
 
+        const frag = document.createDocumentFragment();
         for (let i = 0; i < hand.length; i++) {
             const tile = hand[i];
             const tileEl = renderTile(tile);
+            tileEl.dataset.tileId = tile.id;
 
             if (drawnTileId !== null && tile.id === drawnTileId) {
                 tileEl.classList.add('drawn-tile');
             }
-
-            tileEl.addEventListener('click', () => {
-                if (!canAct) return;
-                if (selectedTile === tile.id) {
-                    // Second tap on same tile = discard (works on mobile + desktop)
-                    discardTile(tile.id);
-                    return;
-                }
-                document.querySelectorAll('.my-hand .tile').forEach(t => t.classList.remove('selected'));
-                selectedTile = tile.id;
-                tileEl.classList.add('selected');
-            });
-
-            tileEl.addEventListener('dblclick', () => {
-                if (!canAct) return;
-                discardTile(tile.id);
-            });
-
-            myHandEl.appendChild(tileEl);
+            frag.appendChild(tileEl);
         }
+        _myHandEl.appendChild(frag);
     }
 
     function updatePlayerList(state) {
@@ -1647,17 +1727,35 @@
 
     function updateGameLog(log) {
         const logEl = document.getElementById('gameLog');
-        logEl.innerHTML = '';
-        for (const entry of log) {
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-            if (entry.message.includes('wins') || entry.message.includes('started') || entry.message.includes('Gong') || entry.message.includes('Pung') || entry.message.includes('Soeng')) {
-                div.classList.add('important');
-            }
-            div.textContent = entry.message;
-            logEl.appendChild(div);
+
+        // If log shrunk (new round), full rebuild
+        if (log.length < _lastLogLength) {
+            logEl.innerHTML = '';
+            _lastLogLength = 0;
         }
-        logEl.scrollTop = logEl.scrollHeight;
+
+        // Only append new entries
+        if (log.length > _lastLogLength) {
+            const frag = document.createDocumentFragment();
+            for (let i = _lastLogLength; i < log.length; i++) {
+                const entry = log[i];
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                if (entry.message.includes('wins') || entry.message.includes('started') || entry.message.includes('Gong') || entry.message.includes('Pung') || entry.message.includes('Soeng')) {
+                    div.classList.add('important');
+                }
+                div.textContent = entry.message;
+                frag.appendChild(div);
+            }
+            logEl.appendChild(frag);
+            _lastLogLength = log.length;
+
+            // Cap at 100 entries to prevent unbounded DOM growth
+            while (logEl.children.length > 100) {
+                logEl.removeChild(logEl.firstChild);
+            }
+            logEl.scrollTop = logEl.scrollHeight;
+        }
     }
 
     function showActions(actions) {
@@ -1712,7 +1810,7 @@
 
     // Socket event handlers
     socket.on('gameState', (state) => {
-        updateBoard(state);
+        scheduleBoardUpdate(state);
         if (state.phase === 'waiting' || (state.phase === 'finished' && !document.getElementById('winOverlay').classList.contains('show'))) {
             document.getElementById('waitingOverlay').classList.remove('hidden');
         } else {
@@ -1721,6 +1819,10 @@
     });
 
     socket.on('gameStarted', () => {
+        // Reset incremental caches for new round
+        _lastWallCount = -1;
+        _lastDiscardCount = 0;
+        _lastLogLength = 0;
         document.getElementById('waitingOverlay').classList.add('hidden');
         document.getElementById('winOverlay').classList.remove('show');
         document.getElementById('drawOverlay').classList.remove('show');
@@ -1950,6 +2052,10 @@
         div.className = 'chat-msg';
         div.innerHTML = `<span class="chat-name">${data.name}${data.isSpectator ? ' [S]' : ''}:</span> ${escapeHtml(data.message)}`;
         msgs.appendChild(div);
+        // Cap at 50 messages to prevent DOM bloat
+        while (msgs.children.length > 50) {
+            msgs.removeChild(msgs.firstChild);
+        }
         msgs.scrollTop = msgs.scrollHeight;
     });
 
@@ -1974,7 +2080,8 @@
 
         if (e.key === 'Escape') {
             selectedTile = null;
-            document.querySelectorAll('.my-hand .tile').forEach(t => t.classList.remove('selected'));
+            const sel = _myHandEl.querySelector('.tile.selected');
+            if (sel) sel.classList.remove('selected');
         }
     });
     </script>
