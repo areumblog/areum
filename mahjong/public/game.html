@@ -939,9 +939,9 @@
             .game-container { height: calc(100vh - 44px); }
 
             /* Tiles */
-            .tile { width: 30px; height: 42px; border-radius: 3px; }
+            .tile { width: 30px; height: 46px; border-radius: 3px; }
             .tile .tile-value { font-size: 16px !important; }
-            .tile .tile-eng { display: none; }
+            .tile .tile-eng { font-size: 6px; }
             .tile.dots .tile-value { font-size: 16px !important; }
             .tile.bamboo .tile-value { font-size: 16px !important; }
             .tile.characters .tile-value { font-size: 14px !important; }
@@ -952,13 +952,13 @@
             .dot-circle { width: 6px; height: 6px; }
             .tile .bamboo-display { width: 22px; }
             .bamboo-stick { width: 4px; height: 11px; }
-            .tile-small { width: 22px; height: 30px; }
+            .tile-small { width: 22px; height: 32px; }
             .tile-small .tile-value { font-size: 11px !important; }
-            .tile-small .tile-eng { display: none; }
+            .tile-small .tile-eng { font-size: 5px; }
             .tile-small .dot-circle { width: 4px; height: 4px; }
             .tile-small .bamboo-stick { width: 2px; height: 7px; }
-            .tile-back { width: 30px; height: 42px; }
-            .tile-back-small { width: 22px; height: 30px; }
+            .tile-back { width: 30px; height: 46px; }
+            .tile-back-small { width: 22px; height: 32px; }
             .flower-tile { width: 18px; height: 24px; font-size: 10px; }
 
             /* Other players' hand backs */
@@ -1027,8 +1027,9 @@
 
         /* ========== SMALL PHONES (≤480px) ========== */
         @media (max-width: 480px) {
-            .tile { width: 26px; height: 36px; }
+            .tile { width: 26px; height: 40px; }
             .tile .tile-value { font-size: 14px !important; }
+            .tile .tile-eng { font-size: 5px; }
             .tile.characters .tile-value { font-size: 12px !important; }
             .tile.winds .tile-value { font-size: 16px !important; }
             .tile.dragons .tile-value { font-size: 18px !important; }
@@ -1036,10 +1037,11 @@
             .dot-circle { width: 5px; height: 5px; }
             .tile .bamboo-display { width: 18px; }
             .bamboo-stick { width: 3px; height: 9px; }
-            .tile-back { width: 26px; height: 36px; }
-            .tile-small { width: 18px; height: 26px; }
+            .tile-back { width: 26px; height: 40px; }
+            .tile-small { width: 18px; height: 28px; }
             .tile-small .tile-value { font-size: 9px !important; }
-            .tile-back-small { width: 18px; height: 26px; }
+            .tile-small .tile-eng { font-size: 4px; }
+            .tile-back-small { width: 18px; height: 28px; }
             .other-hand .tile-back { width: 14px; height: 20px; }
             .flower-tile { width: 16px; height: 22px; font-size: 9px; }
 
