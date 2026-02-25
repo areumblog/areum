@@ -1111,7 +1111,6 @@
             border-radius: 2px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.5);
             opacity: 0;
-            will-change: transform, opacity;
         }
         .anim-tile::after {
             content: '';
@@ -1514,6 +1513,8 @@
 
     // ========== DEAL ANIMATION ==========
     let _lastRoomInfo = null; // cached for animation seat display
+    let _animTimers = [];     // track all animation timers for cleanup
+    let _animInterval = null; // dice roll interval
 
     // Dice dot positions for faces 1-6 (as [top%, left%] pairs)
     const DICE_DOTS = {
@@ -1536,10 +1537,24 @@
         }
     }
 
+    function cleanupDealAnimation() {
+        // Clear all pending timers
+        for (const t of _animTimers) clearTimeout(t);
+        _animTimers = [];
+        if (_animInterval) { clearInterval(_animInterval); _animInterval = null; }
+        const el = document.getElementById('dealAnimOverlay');
+        if (el) el.remove();
+    }
+
+    function animTimer(fn, delay) {
+        const id = setTimeout(fn, delay);
+        _animTimers.push(id);
+        return id;
+    }
+
     function playDealAnimation(callback) {
-        // Remove any existing animation overlay
-        const existing = document.getElementById('dealAnimOverlay');
-        if (existing) existing.remove();
+        // Clean up any previous animation fully
+        cleanupDealAnimation();
 
         const tableArea = document.getElementById('tableArea');
         const overlay = document.createElement('div');
@@ -1559,9 +1574,7 @@
         const die1 = Math.floor(Math.random() * 6) + 1;
         const die2 = Math.floor(Math.random() * 6) + 1;
         const diceTotal = die1 + die2;
-        // Wall to break: count counter-clockwise from dealer (bottom=0)
         const breakWall = (diceTotal - 1) % 4;
-        // Stack position to break at (count from right end of that wall)
         const breakStack = diceTotal;
 
         const tiles = [];
@@ -1591,7 +1604,7 @@
         });
 
         // ── Phase 2a: First shuffle (500ms) ──
-        setTimeout(() => {
+        animTimer(() => {
             tiles.forEach(el => {
                 el.style.transition = 'transform 0.65s cubic-bezier(0.25,0.46,0.45,0.94)';
                 const x = cx + (Math.random() - 0.5) * 340 - TW / 2;
@@ -1602,7 +1615,7 @@
         }, 500);
 
         // ── Phase 2b: Second shuffle (1250ms) ──
-        setTimeout(() => {
+        animTimer(() => {
             tiles.forEach(el => {
                 const x = cx + (Math.random() - 0.5) * 280 - TW / 2;
                 const y = cy + (Math.random() - 0.5) * 200 - TH / 2;
@@ -1625,10 +1638,9 @@
             { wcx: cx - inset, wcy: cy, dx: sinT, dy: -cosT, angle: 270 + TILT },
         ];
 
-        // Store tile positions for later use in break/deal
         const tilePositions = [];
 
-        setTimeout(() => {
+        animTimer(() => {
             tiles.forEach(el => {
                 el.style.transition = 'transform 0.85s cubic-bezier(0.22,0.61,0.36,1)';
             });
@@ -1668,24 +1680,20 @@
         diceContainer.appendChild(totalLabel);
         overlay.appendChild(diceContainer);
 
-        // Start dice rolling
-        setTimeout(() => {
+        animTimer(() => {
             diceContainer.classList.add('show');
             diceContainer.classList.add('dice-rolling');
-            // Rapid face changes
-            const rollInterval = setInterval(() => {
+            _animInterval = setInterval(() => {
                 buildDieFace(dieEl1, Math.floor(Math.random() * 6) + 1);
                 buildDieFace(dieEl2, Math.floor(Math.random() * 6) + 1);
             }, 80);
 
-            // Settle dice after 1s
-            setTimeout(() => {
-                clearInterval(rollInterval);
+            animTimer(() => {
+                if (_animInterval) { clearInterval(_animInterval); _animInterval = null; }
                 diceContainer.classList.remove('dice-rolling');
                 buildDieFace(dieEl1, die1);
                 buildDieFace(dieEl2, die2);
-                // Show total
-                setTimeout(() => {
+                animTimer(() => {
                     totalLabel.textContent = `Total: ${diceTotal}`;
                     totalLabel.classList.add('show');
                 }, 300);
@@ -1700,7 +1708,6 @@
             north: { char: '北', eng: 'North' }
         };
 
-        // Positions for wind labels: bottom, right, top, left (relative seats)
         const windPositions = [
             { x: cx, y: cy + inset + 55, anchorX: '-50%', anchorY: '0' },
             { x: cx + inset + 45, y: cy, anchorX: '0', anchorY: '-50%' },
@@ -1709,12 +1716,10 @@
         ];
 
         const windLabels = [];
-        setTimeout(() => {
-            // Fade out dice
+        animTimer(() => {
             diceContainer.style.transition = 'opacity 0.3s ease';
             diceContainer.style.opacity = '0';
 
-            // Build wind labels from cached room info or defaults
             const players = _lastRoomInfo ? _lastRoomInfo.players : null;
 
             for (let relSeat = 0; relSeat < 4; relSeat++) {
@@ -1734,8 +1739,7 @@
                 overlay.appendChild(label);
                 windLabels.push(label);
 
-                // Stagger appearance
-                setTimeout(() => {
+                animTimer(() => {
                     label.classList.add('show');
                     label.style.transform = `translate(${pos.anchorX}, ${pos.anchorY}) scale(1)`;
                 }, relSeat * 150);
@@ -1743,38 +1747,27 @@
         }, 4600);
 
         // ── Phase 6: Wall break (5800ms) ──
-        setTimeout(() => {
-            // Break point: separate tiles at breakStack position in breakWall
+        animTimer(() => {
             const bStack = Math.min(breakStack, STACKS - 2);
             for (let w = 0; w < 4; w++) {
                 if (w !== breakWall) continue;
                 const wall = walls[w];
-                // Shift tiles on left side of break slightly left, right side slightly right
                 for (let s = 0; s < STACKS; s++) {
                     for (let layer = 0; layer < 2; layer++) {
                         const idx = w * 36 + s * 2 + layer;
                         if (idx >= TOTAL || !tilePositions[idx]) continue;
                         const tp = tilePositions[idx];
-
-                        if (s <= bStack) {
-                            // Left portion: shift in negative direction along wall
-                            const shift = -8;
-                            tiles[idx].classList.add('break-gap');
-                            tiles[idx].style.transform = `translate(${tp.x + shift * wall.dx}px,${tp.y + shift * wall.dy}px) rotate(${tp.angle}deg)`;
-                        } else {
-                            // Right portion: shift in positive direction
-                            const shift = 8;
-                            tiles[idx].classList.add('break-gap');
-                            tiles[idx].style.transform = `translate(${tp.x + shift * wall.dx}px,${tp.y + shift * wall.dy}px) rotate(${tp.angle}deg)`;
-                        }
+                        const shift = s <= bStack ? -8 : 8;
+                        tiles[idx].classList.add('break-gap');
+                        tiles[idx].style.transform = `translate(${tp.x + shift * wall.dx}px,${tp.y + shift * wall.dy}px) rotate(${tp.angle}deg)`;
                     }
                 }
             }
         }, 5800);
 
-        // ── Phase 7: Deal tiles from break point to players (6500ms) ──
-        setTimeout(() => {
-            // Fade out wind labels
+        // ── Phase 7: Deal tiles from walls to players (6500ms) ──
+        // Use batched RAF approach instead of 104 individual setTimeouts
+        animTimer(() => {
             windLabels.forEach(l => { l.style.opacity = '0'; });
 
             const targets = [
@@ -1784,28 +1777,41 @@
                 { x: 60, y: cy }
             ];
 
-            // Deal from each wall to corresponding player
+            // Pre-compute all deal moves, then apply in batched RAF frames
+            const dealMoves = [];
             for (let w = 0; w < 4; w++) {
                 const target = targets[w];
                 for (let i = 0; i < 26; i++) {
                     const idx = w * 36 + i;
                     if (idx >= TOTAL) break;
-                    const delay = Math.floor(i / 2) * 50;
-                    setTimeout(() => {
-                        tiles[idx].style.transition = 'transform 0.4s cubic-bezier(0.55,0.06,0.68,0.19), opacity 0.25s ease 0.1s';
-                        tiles[idx].style.transform = `translate(${target.x - TW / 2}px,${target.y - TH / 2}px) scale(0.5)`;
-                        tiles[idx].style.opacity = '0';
-                    }, delay);
+                    dealMoves.push({ idx, target, batch: Math.floor(i / 4) });
                 }
+            }
+
+            // Group by batch and apply each batch with a single timer
+            const batches = {};
+            for (const m of dealMoves) {
+                if (!batches[m.batch]) batches[m.batch] = [];
+                batches[m.batch].push(m);
+            }
+            for (const [batchNum, moves] of Object.entries(batches)) {
+                animTimer(() => {
+                    for (const m of moves) {
+                        tiles[m.idx].style.transition = 'transform 0.4s cubic-bezier(0.55,0.06,0.68,0.19), opacity 0.25s ease 0.1s';
+                        tiles[m.idx].style.transform = `translate(${m.target.x - TW / 2}px,${m.target.y - TH / 2}px) scale(0.5)`;
+                        tiles[m.idx].style.opacity = '0';
+                    }
+                }, batchNum * 100);
             }
         }, 6500);
 
         // ── Phase 8: Fade out overlay, reveal game board (8200ms) ──
-        setTimeout(() => {
+        animTimer(() => {
             overlay.style.transition = 'opacity 0.4s ease';
             overlay.style.opacity = '0';
-            setTimeout(() => {
+            animTimer(() => {
                 overlay.remove();
+                _animTimers = [];
                 if (callback) callback();
             }, 400);
         }, 8200);
