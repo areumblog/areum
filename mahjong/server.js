@@ -100,7 +100,7 @@ function broadcastRoomUpdate(room) {
     aiDelay: room.aiDelay,
     players: room.players.map((p, i) => ({
       seat: i,
-      name: p ? p.name : `AI ${WIND_VALUES[i].charAt(0).toUpperCase() + WIND_VALUES[i].slice(1)}`,
+      name: p ? p.name : ['CPU Burnie', 'CPU Parkette', 'CPU Levina', 'CPU Dozanne'][i],
       isAI: !p,
       seatWind: room.game.getSeatWind(i)
     })),

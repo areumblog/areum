@@ -2008,7 +2008,7 @@
 
             if (windEl) windEl.textContent = (WIND_ENG[player.seatWind] || '') + ' ' + (WIND_CHARS[player.seatWind] || '');
             if (nameEl) {
-                nameEl.innerHTML = player.name + (player.isAI ? '<span class="ai-tag">[AI]</span>' : '');
+                nameEl.textContent = player.name;
             }
             if (scoreEl) scoreEl.textContent = player.score;
             if (infoEl) {
@@ -2155,7 +2155,7 @@
             item.className = 'player-list-item' + (state.currentPlayer === i ? ' current-turn' : '');
             item.innerHTML = `
                 <span class="wind">${WIND_ENG[p.seatWind] || ''} ${WIND_CHARS[p.seatWind] || ''}</span>
-                <span class="name ${p.isAI ? 'is-ai' : ''}">${p.name}${p.isAI ? ' [AI]' : ''}</span>
+                <span class="name ${p.isAI ? 'is-ai' : ''}">${p.name}</span>
                 <span class="score-val">${p.score >= 0 ? '+' : ''}${p.score}</span>
             `;
             listEl.appendChild(item);
@@ -2290,7 +2290,7 @@
                 item.className = 'player-list-item';
                 item.innerHTML = `
                     <span class="wind">${WIND_ENG[p.seatWind] || ''} ${WIND_CHARS[p.seatWind] || ''}</span>
-                    <span class="name ${p.isAI ? 'is-ai' : ''}">${p.name}${p.isAI ? ' [AI]' : ''}</span>
+                    <span class="name ${p.isAI ? 'is-ai' : ''}">${p.name}</span>
                 `;
                 listEl.appendChild(item);
             }

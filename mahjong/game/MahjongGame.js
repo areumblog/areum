@@ -1105,7 +1105,7 @@ class MahjongGame {
     if (this.players[index]) {
       return this.players[index].name || `Player ${index + 1}`;
     }
-    return `AI ${WIND_VALUES[this.getSeatWindIndex(index)].charAt(0).toUpperCase() + WIND_VALUES[this.getSeatWindIndex(index)].slice(1)}`;
+    return ['CPU Burnie', 'CPU Parkette', 'CPU Levina', 'CPU Dozanne'][index];
   }
 
   getSeatWindIndex(seatIndex) {
