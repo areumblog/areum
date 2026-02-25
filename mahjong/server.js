@@ -420,6 +420,8 @@ io.on('connection', (socket) => {
     socket.join(room.code);
 
     socket.emit('roomJoined', { code: room.code, seat, tableName: room.tableName });
+    // Notify others that a player joined
+    socket.to(room.code).emit('playerJoined', { name: playerName });
     broadcastRoomUpdate(room);
 
     if (room.game.phase === PHASES.PLAYING) {

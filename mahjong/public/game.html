@@ -1067,6 +1067,30 @@
             .room-code-display { display: none; }
             .wall-count { display: none; }
         }
+
+        /* Player joined toast notification */
+        .join-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: var(--jade);
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .join-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -1842,6 +1866,25 @@
             aiSpeedLabel.textContent = seconds + 's';
         }
     });
+
+    socket.on('playerJoined', (data) => {
+        showJoinToast(data.name + ' has joined your table');
+    });
+
+    function showJoinToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'join-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        // Trigger reflow then animate in
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, 3000);
+    }
 
     socket.on('yourTurn', (data) => {
         canAct = true;
