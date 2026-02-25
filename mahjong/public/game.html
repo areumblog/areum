@@ -1091,6 +1091,38 @@
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
+
+        /* Deal animation overlay */
+        #dealAnimOverlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 250;
+            overflow: hidden;
+            background: rgba(10, 15, 13, 0.93);
+        }
+        .anim-tile {
+            position: absolute;
+            left: 0; top: 0;
+            width: 20px;
+            height: 28px;
+            background: linear-gradient(135deg, #1B8B4A, #156B38, #1B8B4A);
+            border: 0.5px solid #0D4D28;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+        .anim-tile::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 1px;
+        }
     </style>
 </head>
 <body>
@@ -1393,6 +1425,147 @@
     let selectedTile = null;
     let canAct = false;
     let drawnTileId = null;
+
+    // ========== DEAL ANIMATION ==========
+    function playDealAnimation(callback) {
+        // Remove any existing animation overlay
+        const existing = document.getElementById('dealAnimOverlay');
+        if (existing) existing.remove();
+
+        const tableArea = document.getElementById('tableArea');
+        const overlay = document.createElement('div');
+        overlay.id = 'dealAnimOverlay';
+        tableArea.appendChild(overlay);
+
+        const rect = overlay.getBoundingClientRect();
+        const W = rect.width, H = rect.height;
+        const cx = W / 2, cy = H / 2;
+        const TW = 20, TH = 28;
+        const TOTAL = 144;
+        const STACKS = 18;
+        const D2R = Math.PI / 180;
+        const TILT = 2.5;
+
+        const tiles = [];
+        const frag = document.createDocumentFragment();
+
+        // Create all 144 tiles scattered around center
+        for (let i = 0; i < TOTAL; i++) {
+            const el = document.createElement('div');
+            el.className = 'anim-tile';
+            const sx = cx + (Math.random() - 0.5) * 300 - TW / 2;
+            const sy = cy + (Math.random() - 0.5) * 220 - TH / 2;
+            const sr = Math.random() * 360;
+            el.style.transform = `translate(${sx}px,${sy}px) rotate(${sr}deg)`;
+            frag.appendChild(el);
+            tiles.push(el);
+        }
+        overlay.appendChild(frag);
+
+        // Phase 1: Fade in scattered tiles (0-300ms)
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                tiles.forEach(el => {
+                    el.style.transition = 'opacity 0.3s ease';
+                    el.style.opacity = '1';
+                });
+            });
+        });
+
+        // Phase 2a: First shuffle (500ms)
+        setTimeout(() => {
+            tiles.forEach(el => {
+                el.style.transition = 'transform 0.65s cubic-bezier(0.25,0.46,0.45,0.94)';
+                const x = cx + (Math.random() - 0.5) * 340 - TW / 2;
+                const y = cy + (Math.random() - 0.5) * 260 - TH / 2;
+                const r = Math.random() * 360;
+                el.style.transform = `translate(${x}px,${y}px) rotate(${r}deg)`;
+            });
+        }, 500);
+
+        // Phase 2b: Second shuffle (1250ms)
+        setTimeout(() => {
+            tiles.forEach(el => {
+                const x = cx + (Math.random() - 0.5) * 280 - TW / 2;
+                const y = cy + (Math.random() - 0.5) * 200 - TH / 2;
+                const r = Math.random() * 360;
+                el.style.transform = `translate(${x}px,${y}px) rotate(${r}deg)`;
+            });
+        }, 1250);
+
+        // Phase 3: Form 4 slightly diagonal walls (2100ms)
+        setTimeout(() => {
+            tiles.forEach(el => {
+                el.style.transition = 'transform 0.85s cubic-bezier(0.22,0.61,0.36,1)';
+            });
+
+            const inset = Math.min(W, H) * 0.22;
+            const wallLen = Math.min(W * 0.42, H * 0.48, 380);
+            const gap = wallLen / STACKS;
+            const cosT = Math.cos(TILT * D2R);
+            const sinT = Math.sin(TILT * D2R);
+
+            // Each wall: center position, direction vector, tile rotation
+            const walls = [
+                { wcx: cx, wcy: cy + inset, dx: cosT, dy: sinT, angle: TILT },
+                { wcx: cx + inset, wcy: cy, dx: -sinT, dy: cosT, angle: 90 + TILT },
+                { wcx: cx, wcy: cy - inset, dx: -cosT, dy: -sinT, angle: 180 + TILT },
+                { wcx: cx - inset, wcy: cy, dx: sinT, dy: -cosT, angle: 270 + TILT },
+            ];
+
+            for (let w = 0; w < 4; w++) {
+                const wall = walls[w];
+                for (let s = 0; s < STACKS; s++) {
+                    const offset = (-STACKS / 2 + s + 0.5) * gap;
+                    const bx = wall.wcx + offset * wall.dx;
+                    const by = wall.wcy + offset * wall.dy;
+
+                    for (let layer = 0; layer < 2; layer++) {
+                        const idx = w * 36 + s * 2 + layer;
+                        if (idx >= TOTAL) break;
+                        const lx = layer * -1;
+                        const ly = layer * -3;
+                        tiles[idx].style.transform = `translate(${bx - TW / 2 + lx}px,${by - TH / 2 + ly}px) rotate(${wall.angle}deg)`;
+                    }
+                }
+            }
+        }, 2100);
+
+        // Phase 4: Deal tiles from walls to player positions (3300ms)
+        setTimeout(() => {
+            const targets = [
+                { x: cx, y: H - 50 },
+                { x: W - 60, y: cy },
+                { x: cx, y: 50 },
+                { x: 60, y: cy }
+            ];
+
+            for (let w = 0; w < 4; w++) {
+                const target = targets[w];
+                // Deal first 26 tiles (13 stacks) from each wall
+                for (let i = 0; i < 26; i++) {
+                    const idx = w * 36 + i;
+                    if (idx >= TOTAL) break;
+                    const delay = Math.floor(i / 2) * 55;
+                    setTimeout(() => {
+                        tiles[idx].style.transition = 'transform 0.45s cubic-bezier(0.55,0.06,0.68,0.19), opacity 0.25s ease 0.15s';
+                        tiles[idx].style.transform = `translate(${target.x - TW / 2}px,${target.y - TH / 2}px) scale(0.5)`;
+                        tiles[idx].style.opacity = '0';
+                    }, delay);
+                }
+            }
+        }, 3300);
+
+        // Phase 5: Fade out overlay, reveal game board (5000ms)
+        setTimeout(() => {
+            overlay.style.transition = 'opacity 0.4s ease';
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.remove();
+                if (callback) callback();
+            }, 400);
+        }, 5000);
+    }
 
     // ========== PERFORMANCE: RAF batching & caches ==========
     let _pendingState = null;
@@ -1852,7 +2025,11 @@
         document.getElementById('waitingOverlay').classList.add('hidden');
         document.getElementById('winOverlay').classList.remove('show');
         document.getElementById('drawOverlay').classList.remove('show');
-        showTeachMessage('Game Started!', 'Tiles have been dealt! You have 13 tiles (14 if you\'re the dealer). <b>Suits:</b> Dots (circles), Bamboo (sticks), Characters (numbers with 萬). <b>Honors:</b> Winds (E/S/W/N) and Dragons (Red/Green/White). Build 4 sets + 1 pair to win! The tile wall around the center shows how many tiles remain.', 15000);
+
+        // Play the shuffle → wall → deal animation, then show teach message
+        playDealAnimation(() => {
+            showTeachMessage('Game Started!', 'Tiles have been dealt! You have 13 tiles (14 if you\'re the dealer). <b>Suits:</b> Dots (circles), Bamboo (sticks), Characters (numbers with 萬). <b>Honors:</b> Winds (E/S/W/N) and Dragons (Red/Green/White). Build 4 sets + 1 pair to win! The tile wall around the center shows how many tiles remain.', 15000);
+        });
     });
 
     socket.on('roomUpdate', (info) => {
@@ -1864,6 +2041,20 @@
             const seconds = Math.round(info.aiDelay / 1000);
             aiSpeedSlider.value = seconds;
             aiSpeedLabel.textContent = seconds + 's';
+        }
+        // Update player list in sidebar (especially before game starts)
+        if (info.players) {
+            const listEl = document.getElementById('playerList');
+            listEl.innerHTML = '';
+            for (const p of info.players) {
+                const item = document.createElement('div');
+                item.className = 'player-list-item';
+                item.innerHTML = `
+                    <span class="wind">${WIND_ENG[p.seatWind] || ''} ${WIND_CHARS[p.seatWind] || ''}</span>
+                    <span class="name ${p.isAI ? 'is-ai' : ''}">${p.name}${p.isAI ? ' [AI]' : ''}</span>
+                `;
+                listEl.appendChild(item);
+            }
         }
     });
 
