@@ -1123,6 +1123,92 @@
             border: 1px solid rgba(255,255,255,0.12);
             border-radius: 1px;
         }
+
+        /* Dice animation */
+        .dice-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 18px;
+            z-index: 260;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .dice-container.show { opacity: 1; }
+        .anim-die {
+            width: 52px;
+            height: 52px;
+            background: #F5F0E1;
+            border-radius: 8px;
+            border: 2px solid #C4BCA8;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+            display: grid;
+            place-items: center;
+            position: relative;
+        }
+        .anim-die .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #2D1F11;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+            position: absolute;
+        }
+        .dice-rolling .anim-die {
+            animation: diceShake 0.1s infinite alternate;
+        }
+        @keyframes diceShake {
+            0% { transform: rotate(-8deg) scale(1.05); }
+            100% { transform: rotate(8deg) scale(0.95); }
+        }
+        .dice-total {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, calc(-50% + 42px));
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: var(--gold);
+            letter-spacing: 2px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .dice-total.show { opacity: 1; }
+
+        /* Wind seat labels */
+        .wind-label {
+            position: absolute;
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            z-index: 260;
+            pointer-events: none;
+        }
+        .wind-label.show {
+            opacity: 1;
+        }
+        .wind-label .wind-char {
+            font-size: 32px;
+            display: block;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+        .wind-label .wind-name {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            color: var(--cream);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+            display: block;
+        }
+
+        /* Wall break gap */
+        .anim-tile.break-gap {
+            transition: transform 0.4s ease, opacity 0.3s ease !important;
+        }
     </style>
 </head>
 <body>
@@ -1427,6 +1513,29 @@
     let drawnTileId = null;
 
     // ========== DEAL ANIMATION ==========
+    let _lastRoomInfo = null; // cached for animation seat display
+
+    // Dice dot positions for faces 1-6 (as [top%, left%] pairs)
+    const DICE_DOTS = {
+        1: [[50,50]],
+        2: [[25,25],[75,75]],
+        3: [[25,25],[50,50],[75,75]],
+        4: [[25,25],[25,75],[75,25],[75,75]],
+        5: [[25,25],[25,75],[50,50],[75,25],[75,75]],
+        6: [[25,25],[25,75],[50,25],[50,75],[75,25],[75,75]]
+    };
+
+    function buildDieFace(container, value) {
+        container.innerHTML = '';
+        for (const [t, l] of DICE_DOTS[value]) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.top = t + '%'; dot.style.left = l + '%';
+            dot.style.transform = 'translate(-50%,-50%)';
+            container.appendChild(dot);
+        }
+    }
+
     function playDealAnimation(callback) {
         // Remove any existing animation overlay
         const existing = document.getElementById('dealAnimOverlay');
@@ -1446,6 +1555,15 @@
         const D2R = Math.PI / 180;
         const TILT = 2.5;
 
+        // Dice results (random for ceremony)
+        const die1 = Math.floor(Math.random() * 6) + 1;
+        const die2 = Math.floor(Math.random() * 6) + 1;
+        const diceTotal = die1 + die2;
+        // Wall to break: count counter-clockwise from dealer (bottom=0)
+        const breakWall = (diceTotal - 1) % 4;
+        // Stack position to break at (count from right end of that wall)
+        const breakStack = diceTotal;
+
         const tiles = [];
         const frag = document.createDocumentFragment();
 
@@ -1462,7 +1580,7 @@
         }
         overlay.appendChild(frag);
 
-        // Phase 1: Fade in scattered tiles (0-300ms)
+        // ── Phase 1: Fade in scattered tiles (0-300ms) ──
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 tiles.forEach(el => {
@@ -1472,7 +1590,7 @@
             });
         });
 
-        // Phase 2a: First shuffle (500ms)
+        // ── Phase 2a: First shuffle (500ms) ──
         setTimeout(() => {
             tiles.forEach(el => {
                 el.style.transition = 'transform 0.65s cubic-bezier(0.25,0.46,0.45,0.94)';
@@ -1483,7 +1601,7 @@
             });
         }, 500);
 
-        // Phase 2b: Second shuffle (1250ms)
+        // ── Phase 2b: Second shuffle (1250ms) ──
         setTimeout(() => {
             tiles.forEach(el => {
                 const x = cx + (Math.random() - 0.5) * 280 - TW / 2;
@@ -1493,25 +1611,27 @@
             });
         }, 1250);
 
-        // Phase 3: Form 4 slightly diagonal walls (2100ms)
+        // ── Phase 3: Form 4 slightly diagonal walls (2100ms) ──
+        const inset = Math.min(W, H) * 0.22;
+        const wallLen = Math.min(W * 0.42, H * 0.48, 380);
+        const gap = wallLen / STACKS;
+        const cosT = Math.cos(TILT * D2R);
+        const sinT = Math.sin(TILT * D2R);
+
+        const walls = [
+            { wcx: cx, wcy: cy + inset, dx: cosT, dy: sinT, angle: TILT },
+            { wcx: cx + inset, wcy: cy, dx: -sinT, dy: cosT, angle: 90 + TILT },
+            { wcx: cx, wcy: cy - inset, dx: -cosT, dy: -sinT, angle: 180 + TILT },
+            { wcx: cx - inset, wcy: cy, dx: sinT, dy: -cosT, angle: 270 + TILT },
+        ];
+
+        // Store tile positions for later use in break/deal
+        const tilePositions = [];
+
         setTimeout(() => {
             tiles.forEach(el => {
                 el.style.transition = 'transform 0.85s cubic-bezier(0.22,0.61,0.36,1)';
             });
-
-            const inset = Math.min(W, H) * 0.22;
-            const wallLen = Math.min(W * 0.42, H * 0.48, 380);
-            const gap = wallLen / STACKS;
-            const cosT = Math.cos(TILT * D2R);
-            const sinT = Math.sin(TILT * D2R);
-
-            // Each wall: center position, direction vector, tile rotation
-            const walls = [
-                { wcx: cx, wcy: cy + inset, dx: cosT, dy: sinT, angle: TILT },
-                { wcx: cx + inset, wcy: cy, dx: -sinT, dy: cosT, angle: 90 + TILT },
-                { wcx: cx, wcy: cy - inset, dx: -cosT, dy: -sinT, angle: 180 + TILT },
-                { wcx: cx - inset, wcy: cy, dx: sinT, dy: -cosT, angle: 270 + TILT },
-            ];
 
             for (let w = 0; w < 4; w++) {
                 const wall = walls[w];
@@ -1525,14 +1645,138 @@
                         if (idx >= TOTAL) break;
                         const lx = layer * -1;
                         const ly = layer * -3;
-                        tiles[idx].style.transform = `translate(${bx - TW / 2 + lx}px,${by - TH / 2 + ly}px) rotate(${wall.angle}deg)`;
+                        const tx = bx - TW / 2 + lx;
+                        const ty = by - TH / 2 + ly;
+                        tilePositions[idx] = { x: tx, y: ty, angle: wall.angle, wall: w, stack: s };
+                        tiles[idx].style.transform = `translate(${tx}px,${ty}px) rotate(${wall.angle}deg)`;
                     }
                 }
             }
         }, 2100);
 
-        // Phase 4: Deal tiles from walls to player positions (3300ms)
+        // ── Phase 4: Dice roll (3200ms) ──
+        const diceContainer = document.createElement('div');
+        diceContainer.className = 'dice-container';
+        const dieEl1 = document.createElement('div');
+        dieEl1.className = 'anim-die';
+        const dieEl2 = document.createElement('div');
+        dieEl2.className = 'anim-die';
+        const totalLabel = document.createElement('div');
+        totalLabel.className = 'dice-total';
+        diceContainer.appendChild(dieEl1);
+        diceContainer.appendChild(dieEl2);
+        diceContainer.appendChild(totalLabel);
+        overlay.appendChild(diceContainer);
+
+        // Start dice rolling
         setTimeout(() => {
+            diceContainer.classList.add('show');
+            diceContainer.classList.add('dice-rolling');
+            // Rapid face changes
+            const rollInterval = setInterval(() => {
+                buildDieFace(dieEl1, Math.floor(Math.random() * 6) + 1);
+                buildDieFace(dieEl2, Math.floor(Math.random() * 6) + 1);
+            }, 80);
+
+            // Settle dice after 1s
+            setTimeout(() => {
+                clearInterval(rollInterval);
+                diceContainer.classList.remove('dice-rolling');
+                buildDieFace(dieEl1, die1);
+                buildDieFace(dieEl2, die2);
+                // Show total
+                setTimeout(() => {
+                    totalLabel.textContent = `Total: ${diceTotal}`;
+                    totalLabel.classList.add('show');
+                }, 300);
+            }, 1000);
+        }, 3200);
+
+        // ── Phase 5: Show seat/wind assignments (4600ms) ──
+        const WIND_DATA = {
+            east:  { char: '東', eng: 'East' },
+            south: { char: '南', eng: 'South' },
+            west:  { char: '西', eng: 'West' },
+            north: { char: '北', eng: 'North' }
+        };
+
+        // Positions for wind labels: bottom, right, top, left (relative seats)
+        const windPositions = [
+            { x: cx, y: cy + inset + 55, anchorX: '-50%', anchorY: '0' },
+            { x: cx + inset + 45, y: cy, anchorX: '0', anchorY: '-50%' },
+            { x: cx, y: cy - inset - 55, anchorX: '-50%', anchorY: '-100%' },
+            { x: cx - inset - 45, y: cy, anchorX: '-100%', anchorY: '-50%' },
+        ];
+
+        const windLabels = [];
+        setTimeout(() => {
+            // Fade out dice
+            diceContainer.style.transition = 'opacity 0.3s ease';
+            diceContainer.style.opacity = '0';
+
+            // Build wind labels from cached room info or defaults
+            const players = _lastRoomInfo ? _lastRoomInfo.players : null;
+
+            for (let relSeat = 0; relSeat < 4; relSeat++) {
+                const absSeat = (relSeat + mySeat) % 4;
+                const player = players ? players[absSeat] : null;
+                const wind = player ? player.seatWind : ['east','south','west','north'][absSeat];
+                const wd = WIND_DATA[wind] || WIND_DATA.east;
+                const pName = player ? player.name : '';
+
+                const label = document.createElement('div');
+                label.className = 'wind-label';
+                const pos = windPositions[relSeat];
+                label.style.left = pos.x + 'px';
+                label.style.top = pos.y + 'px';
+                label.style.transform = `translate(${pos.anchorX}, ${pos.anchorY}) scale(0.7)`;
+                label.innerHTML = `<span class="wind-char">${wd.char}</span><span class="wind-name">${pName}</span>`;
+                overlay.appendChild(label);
+                windLabels.push(label);
+
+                // Stagger appearance
+                setTimeout(() => {
+                    label.classList.add('show');
+                    label.style.transform = `translate(${pos.anchorX}, ${pos.anchorY}) scale(1)`;
+                }, relSeat * 150);
+            }
+        }, 4600);
+
+        // ── Phase 6: Wall break (5800ms) ──
+        setTimeout(() => {
+            // Break point: separate tiles at breakStack position in breakWall
+            const bStack = Math.min(breakStack, STACKS - 2);
+            for (let w = 0; w < 4; w++) {
+                if (w !== breakWall) continue;
+                const wall = walls[w];
+                // Shift tiles on left side of break slightly left, right side slightly right
+                for (let s = 0; s < STACKS; s++) {
+                    for (let layer = 0; layer < 2; layer++) {
+                        const idx = w * 36 + s * 2 + layer;
+                        if (idx >= TOTAL || !tilePositions[idx]) continue;
+                        const tp = tilePositions[idx];
+
+                        if (s <= bStack) {
+                            // Left portion: shift in negative direction along wall
+                            const shift = -8;
+                            tiles[idx].classList.add('break-gap');
+                            tiles[idx].style.transform = `translate(${tp.x + shift * wall.dx}px,${tp.y + shift * wall.dy}px) rotate(${tp.angle}deg)`;
+                        } else {
+                            // Right portion: shift in positive direction
+                            const shift = 8;
+                            tiles[idx].classList.add('break-gap');
+                            tiles[idx].style.transform = `translate(${tp.x + shift * wall.dx}px,${tp.y + shift * wall.dy}px) rotate(${tp.angle}deg)`;
+                        }
+                    }
+                }
+            }
+        }, 5800);
+
+        // ── Phase 7: Deal tiles from break point to players (6500ms) ──
+        setTimeout(() => {
+            // Fade out wind labels
+            windLabels.forEach(l => { l.style.opacity = '0'; });
+
             const targets = [
                 { x: cx, y: H - 50 },
                 { x: W - 60, y: cy },
@@ -1540,23 +1784,23 @@
                 { x: 60, y: cy }
             ];
 
+            // Deal from each wall to corresponding player
             for (let w = 0; w < 4; w++) {
                 const target = targets[w];
-                // Deal first 26 tiles (13 stacks) from each wall
                 for (let i = 0; i < 26; i++) {
                     const idx = w * 36 + i;
                     if (idx >= TOTAL) break;
-                    const delay = Math.floor(i / 2) * 55;
+                    const delay = Math.floor(i / 2) * 50;
                     setTimeout(() => {
-                        tiles[idx].style.transition = 'transform 0.45s cubic-bezier(0.55,0.06,0.68,0.19), opacity 0.25s ease 0.15s';
+                        tiles[idx].style.transition = 'transform 0.4s cubic-bezier(0.55,0.06,0.68,0.19), opacity 0.25s ease 0.1s';
                         tiles[idx].style.transform = `translate(${target.x - TW / 2}px,${target.y - TH / 2}px) scale(0.5)`;
                         tiles[idx].style.opacity = '0';
                     }, delay);
                 }
             }
-        }, 3300);
+        }, 6500);
 
-        // Phase 5: Fade out overlay, reveal game board (5000ms)
+        // ── Phase 8: Fade out overlay, reveal game board (8200ms) ──
         setTimeout(() => {
             overlay.style.transition = 'opacity 0.4s ease';
             overlay.style.opacity = '0';
@@ -1564,7 +1808,7 @@
                 overlay.remove();
                 if (callback) callback();
             }, 400);
-        }, 5000);
+        }, 8200);
     }
 
     // ========== PERFORMANCE: RAF batching & caches ==========
@@ -2033,6 +2277,8 @@
     });
 
     socket.on('roomUpdate', (info) => {
+        // Cache room info for deal animation
+        _lastRoomInfo = info;
         // Update table name and AI delay if available
         if (info.tableName) {
             document.getElementById('tableNameDisplay').textContent = info.tableName;
