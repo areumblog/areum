@@ -2097,8 +2097,8 @@
         div.className = 'chat-msg';
         div.innerHTML = `<span class="chat-name">${data.name}${data.isSpectator ? ' [S]' : ''}:</span> ${escapeHtml(data.message)}`;
         msgs.appendChild(div);
-        // Cap at 50 messages to prevent DOM bloat
-        while (msgs.children.length > 50) {
+        // Cap at 600 messages to prevent DOM bloat
+        while (msgs.children.length > 600) {
             msgs.removeChild(msgs.firstChild);
         }
         msgs.scrollTop = msgs.scrollHeight;
