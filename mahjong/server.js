@@ -163,6 +163,10 @@ function processAITurn(room, seatIndex) {
         const result = game.passClaimAction(seatIndex);
         handleActionResult(room, result);
       }
+    } else {
+      // AI has no claims available — pass to avoid stalling the claim phase
+      const result = game.passClaimAction(seatIndex);
+      handleActionResult(room, result);
     }
     return;
   }
@@ -210,6 +214,12 @@ function processAITurn(room, seatIndex) {
 
 function handleActionResult(room, result) {
   if (!result) return;
+
+  // Clear claim safety timeout whenever claims resolve or game ends
+  if (room.claimTimeout && result.action !== 'claim_registered' && result.action !== 'pass_registered') {
+    clearTimeout(room.claimTimeout);
+    room.claimTimeout = null;
+  }
 
   broadcastGameState(room);
 
@@ -326,11 +336,26 @@ function handleClaimPhase(room, claims) {
 
   // Check if all claims are auto-resolved
   if (room.game.allClaimsResolved()) {
-    setTimeout(() => {
+    const result = room.game.resolveClaims();
+    handleActionResult(room, result);
+    return;
+  }
+
+  // Safety timeout: if claims aren't resolved within 15s, force-pass remaining players
+  if (room.claimTimeout) clearTimeout(room.claimTimeout);
+  room.claimTimeout = setTimeout(() => {
+    if (!room.game || room.game.phase !== PHASES.CLAIM) return;
+    for (let p = 0; p < 4; p++) {
+      if (p === room.game.lastDiscardPlayer) continue;
+      if (!(p in room.game.pendingClaims)) {
+        room.game.passClaimAction(p);
+      }
+    }
+    if (room.game.allClaimsResolved()) {
       const result = room.game.resolveClaims();
       handleActionResult(room, result);
-    }, 500);
-  }
+    }
+  }, 15000);
 }
 
 function triggerNextTurn(room, playerIndex) {
@@ -601,7 +626,10 @@ io.on('connection', (socket) => {
       // If game is in progress, AI takes over
       if (room.game.phase === PHASES.PLAYING || room.game.phase === PHASES.CLAIM) {
         room.game.addLog(`${playerName} disconnected. AI is taking over.`);
-        if (room.game.currentPlayer === currentSeat) {
+        if (room.game.phase === PHASES.CLAIM) {
+          // AI must respond to the pending claim phase immediately
+          scheduleAIAction(room, currentSeat, 1000);
+        } else if (room.game.currentPlayer === currentSeat) {
           scheduleAIAction(room, currentSeat, 2000);
         }
       }
