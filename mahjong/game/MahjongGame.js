@@ -424,6 +424,7 @@ class MahjongGame {
     this.turnNumber = 0;
     this.lastDiscard = null;
     this.lastDiscardPlayer = -1;
+    this.discardCounter = 0;
     this.pendingClaims = {};
     this.claimTimer = null;
     this.drawnTile = null;
@@ -450,6 +451,7 @@ class MahjongGame {
     this.turnNumber = 0;
     this.lastDiscard = null;
     this.lastDiscardPlayer = -1;
+    this.discardCounter = 0;
     this.pendingClaims = {};
     this.drawnTile = null;
     this.lastAction = null;
@@ -591,6 +593,7 @@ class MahjongGame {
     if (tileIdx < 0) return { error: 'Tile not in hand' };
 
     const tile = this.hands[playerIndex].splice(tileIdx, 1)[0];
+    tile.discardOrder = this.discardCounter++;
     this.discards[playerIndex].push(tile);
     this.lastDiscard = tile;
     this.lastDiscardPlayer = playerIndex;

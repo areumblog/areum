@@ -2087,6 +2087,7 @@
                 allDiscards.push({ tile: d, playerIndex: i });
             }
         }
+        allDiscards.sort((a, b) => (a.tile.discardOrder ?? 0) - (b.tile.discardOrder ?? 0));
 
         poolEl.innerHTML = '';
         const frag = document.createDocumentFragment();
