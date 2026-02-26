@@ -528,10 +528,10 @@ io.on('connection', (socket) => {
         socket.emit('error', { message: result.error });
         return;
       }
-      if (room.game.allClaimsResolved()) {
-        const resolveResult = room.game.resolveClaims();
-        handleActionResult(room, resolveResult);
-      }
+      // Always pass the result to handleActionResult — passClaimAction may
+      // have already resolved all claims internally and returned a
+      // claims_resolved / game_won action that must be processed.
+      handleActionResult(room, result);
       return;
     }
 

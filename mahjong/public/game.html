@@ -1520,6 +1520,7 @@
     let gameState = null;
     let selectedTile = null;
     let canAct = false;
+    let claimMode = false;
     let drawnTileId = null;
 
     // ========== DEAL ANIMATION ==========
@@ -2235,7 +2236,7 @@
     }
 
     function discardTile(tileId) {
-        if (!canAct) return;
+        if (!canAct || claimMode) return;
         canAct = false;
         drawnTileId = null;
         hideActions();
@@ -2338,6 +2339,7 @@
 
     socket.on('yourTurn', (data) => {
         canAct = true;
+        claimMode = false;
         drawnTileId = data.drawnTile ? data.drawnTile.id : null;
 
         const actions = [];
@@ -2395,6 +2397,7 @@
 
     socket.on('yourTurnDiscard', (data) => {
         canAct = true;
+        claimMode = false;
         drawnTileId = null;
         hideActions();
         if (data && data.isDealer) {
@@ -2405,6 +2408,7 @@
     });
 
     socket.on('claimAvailable', (data) => {
+        claimMode = true;
         const actions = [];
 
         for (const claim of data.claims) {
@@ -2491,6 +2495,7 @@
     });
 
     socket.on('gameWon', (data) => {
+        claimMode = false;
         const overlay = document.getElementById('winOverlay');
         overlay.classList.add('show');
 
@@ -2535,6 +2540,7 @@
     });
 
     socket.on('gameDraw', () => {
+        claimMode = false;
         document.getElementById('drawOverlay').classList.add('show');
         canAct = false;
         hideActions();
@@ -2547,8 +2553,8 @@
         div.className = 'chat-msg';
         div.innerHTML = `<span class="chat-name">${data.name}${data.isSpectator ? ' [S]' : ''}:</span> ${escapeHtml(data.message)}`;
         msgs.appendChild(div);
-        // Cap at 600 messages to prevent DOM bloat
-        while (msgs.children.length > 600) {
+        // Cap at 1000 messages to prevent DOM bloat
+        while (msgs.children.length > 1000) {
             msgs.removeChild(msgs.firstChild);
         }
         msgs.scrollTop = msgs.scrollHeight;
@@ -2556,6 +2562,10 @@
 
     socket.on('error', (data) => {
         console.warn('Server error:', data.message);
+        // Re-enable player input so they aren't permanently stuck
+        // (e.g. if a discard was rejected due to wrong phase/turn).
+        // The server will reject any truly invalid follow-up action anyway.
+        canAct = true;
     });
 
     function escapeHtml(str) {
