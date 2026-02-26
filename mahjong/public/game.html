@@ -423,7 +423,14 @@
             border-color: var(--gold);
         }
         .my-hand .tile.drawn-tile {
-            margin-left: 12px;
+            margin-right: 12px;
+            box-shadow: 0 0 8px 2px rgba(230, 200, 80, 0.6);
+            border-color: rgba(230, 200, 80, 0.7);
+        }
+        .my-hand .tile.drawn-tile.selected {
+            transform: translateY(-12px);
+            box-shadow: 0 10px 20px rgba(201, 169, 110, 0.4);
+            border-color: var(--gold);
         }
 
         /* Other players' hands */
@@ -992,7 +999,7 @@
 
             /* My hand */
             .my-hand { gap: 2px; padding: 6px 0; }
-            .my-hand .tile.drawn-tile { margin-left: 8px; }
+            .my-hand .tile.drawn-tile { margin-right: 8px; }
             .my-hand .tile.selected { transform: translateY(-10px); }
             .my-hand .tile:hover { transform: none; }
 
@@ -1059,7 +1066,7 @@
             .player-score { font-size: 9px; }
 
             .my-hand { gap: 1px; }
-            .my-hand .tile.drawn-tile { margin-left: 6px; }
+            .my-hand .tile.drawn-tile { margin-right: 6px; }
 
             .action-bar { bottom: 50px; gap: 4px; }
             .action-btn { padding: 10px 14px; font-size: 11px; min-height: 40px; }
@@ -2134,6 +2141,8 @@
         selectedTile = null;
 
         const frag = document.createDocumentFragment();
+        let drawnTileEl = null;
+
         for (let i = 0; i < hand.length; i++) {
             const tile = hand[i];
             const tileEl = renderTile(tile);
@@ -2141,8 +2150,14 @@
 
             if (drawnTileId !== null && tile.id === drawnTileId) {
                 tileEl.classList.add('drawn-tile');
+                drawnTileEl = tileEl;
+            } else {
+                frag.appendChild(tileEl);
             }
-            frag.appendChild(tileEl);
+        }
+        // Place drawn tile at the left, separated from the rest
+        if (drawnTileEl) {
+            _myHandEl.appendChild(drawnTileEl);
         }
         _myHandEl.appendChild(frag);
     }
