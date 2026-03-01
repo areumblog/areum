@@ -115,14 +115,13 @@
 
         /* AI Speed control */
         .ai-speed-control {
-            display: none;
+            display: flex;
             align-items: center;
             gap: 6px;
             font-size: 10px;
             color: var(--gold-dim);
             letter-spacing: 1px;
         }
-        .ai-speed-control.show { display: flex; }
         .ai-speed-control input[type="range"] {
             width: 80px;
             accent-color: var(--gold);
@@ -1471,10 +1470,7 @@
         teachingMode = !teachingMode;
         const btn = document.getElementById('teachToggle');
         const panel = document.getElementById('teachPanel');
-        const speedControl = document.getElementById('aiSpeedControl');
         btn.classList.toggle('active', teachingMode);
-        // Show AI speed control when teaching mode is on
-        speedControl.classList.toggle('show', teachingMode);
         if (teachingMode) {
             showTeachMessage('Teaching Mode ON', 'Welcome! I\'ll explain what\'s happening at each step. Mahjong is a 4-player tile game. Your goal: build a winning hand of 4 sets + 1 pair (14 tiles). Sets can be runs of 3 in a suit (Soeng) or 3 identical tiles (Pung). Use the <b>AI Speed</b> slider to control how fast the AI plays. Watch the tips as the game progresses!');
         } else {

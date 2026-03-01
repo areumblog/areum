@@ -571,10 +571,18 @@ io.on('connection', (socket) => {
 
     if (data.type === 'concealed_kong') {
       const result = room.game.processConcealedKong(currentSeat, data);
-      if (result && !result.error) handleActionResult(room, result);
+      if (!result || result.error) {
+        socket.emit('error', { message: (result && result.error) || 'Kong failed' });
+        return;
+      }
+      handleActionResult(room, result);
     } else if (data.type === 'add_kong') {
       const result = room.game.processAddKong(currentSeat, data);
-      if (result && !result.error) handleActionResult(room, result);
+      if (!result || result.error) {
+        socket.emit('error', { message: (result && result.error) || 'Kong failed' });
+        return;
+      }
+      handleActionResult(room, result);
     }
   });
 
@@ -636,6 +644,9 @@ io.on('connection', (socket) => {
     }
 
     broadcastRoomUpdate(room);
+    if (room.game.phase === PHASES.PLAYING || room.game.phase === PHASES.CLAIM || room.game.phase === PHASES.FINISHED) {
+      broadcastGameState(room);
+    }
 
     // Clean up empty rooms after a delay
     const hasHumans = room.players.some(p => p !== null) || room.spectators.length > 0;

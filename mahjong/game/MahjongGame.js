@@ -942,22 +942,25 @@ class MahjongGame {
     if (idx < 0) return { error: 'Tile not in hand' };
 
     // Check if anyone can rob the kong (win)
+    const robClaims = [];
     for (let p = 0; p < 4; p++) {
       if (p === playerIndex) continue;
       const testHand = [...this.hands[p], tile];
       if (this.canFormWinningHand(testHand, this.melds[p], this.concealedKongs[p])) {
-        // Someone can rob the kong - enter claim phase
-        this.lastDiscard = tile;
-        this.lastDiscardPlayer = playerIndex;
-        this.phase = PHASES.CLAIM;
-        this.pendingClaims = {};
-        return {
-          action: 'kong_robbery_possible',
-          tile,
-          playerIndex,
-          claims: [{ type: 'win', playerIndex: p }]
-        };
+        robClaims.push({ type: 'win', playerIndex: p });
       }
+    }
+    if (robClaims.length > 0) {
+      this.lastDiscard = tile;
+      this.lastDiscardPlayer = playerIndex;
+      this.phase = PHASES.CLAIM;
+      this.pendingClaims = {};
+      return {
+        action: 'kong_robbery_possible',
+        tile,
+        playerIndex,
+        claims: robClaims
+      };
     }
 
     this.hands[playerIndex].splice(idx, 1);
