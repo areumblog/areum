@@ -732,6 +732,7 @@
             justify-content: center;
             z-index: 300;
             flex-direction: column;
+            overflow: hidden;
         }
         .win-overlay.show { display: flex; }
         .win-overlay h2 {
@@ -740,6 +741,54 @@
             color: var(--gold);
             letter-spacing: 6px;
             margin-bottom: 20px;
+        }
+        .win-overlay h2 .sik-wu {
+            display: block;
+            font-size: 28px;
+            letter-spacing: 4px;
+            color: var(--gold-light);
+            margin-top: 4px;
+        }
+
+        /* Confetti */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: absolute;
+            top: -10px;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 301;
+            animation: confetti-fall linear forwards;
+        }
+        .confetti.square { border-radius: 2px; }
+        .confetti.circle { border-radius: 50%; }
+        .confetti.strip { width: 5px; height: 16px; border-radius: 1px; }
+
+        /* Tile burst */
+        @keyframes tile-burst {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .burst-tile {
+            position: absolute;
+            width: 32px;
+            height: 42px;
+            background: var(--tile-face);
+            border: 2px solid var(--tile-shadow);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            pointer-events: none;
+            z-index: 302;
+            animation: tile-burst ease-out forwards;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .win-details { text-align: center; max-width: 400px; }
         .win-details .winner-name { font-size: 18px; color: var(--ivory); margin-bottom: 15px; }
@@ -2216,6 +2265,74 @@
         }
     }
 
+    // ========== WIN CELEBRATION ==========
+    const TILE_EMOJIS = [
+        '\u{1F000}','\u{1F001}','\u{1F002}','\u{1F003}','\u{1F004}','\u{1F005}','\u{1F006}',
+        '\u{1F007}','\u{1F008}','\u{1F009}','\u{1F00A}','\u{1F00B}','\u{1F00C}','\u{1F00D}',
+        '\u{1F00E}','\u{1F00F}','\u{1F010}','\u{1F011}','\u{1F012}','\u{1F013}','\u{1F014}',
+        '\u{1F015}','\u{1F016}','\u{1F017}','\u{1F018}','\u{1F019}','\u{1F01A}','\u{1F01B}'
+    ];
+    const CONFETTI_COLORS = ['#C9A96E','#E8D5A3','#C44536','#1B6B3A','#6B2D3E','#FFD700','#FF6B6B','#4ECDC4','#F5F0E1','#FF9F43'];
+
+    function launchConfetti(container) {
+        const count = 80;
+        for (let i = 0; i < count; i++) {
+            const el = document.createElement('div');
+            const shape = ['square','circle','strip'][Math.floor(Math.random()*3)];
+            el.className = `confetti ${shape}`;
+            el.style.left = Math.random() * 100 + '%';
+            el.style.background = CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)];
+            el.style.animationDuration = (2 + Math.random() * 3) + 's';
+            el.style.animationDelay = (Math.random() * 1.5) + 's';
+            if (shape === 'strip') {
+                el.style.width = (4 + Math.random()*4) + 'px';
+                el.style.height = (12 + Math.random()*10) + 'px';
+            } else {
+                const size = 6 + Math.random() * 10;
+                el.style.width = size + 'px';
+                el.style.height = size + 'px';
+            }
+            container.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }
+    }
+
+    function launchTileBurst(container) {
+        const cx = container.offsetWidth / 2;
+        const cy = container.offsetHeight / 2;
+        const count = 18;
+        for (let i = 0; i < count; i++) {
+            const el = document.createElement('div');
+            el.className = 'burst-tile';
+            el.textContent = TILE_EMOJIS[Math.floor(Math.random()*TILE_EMOJIS.length)];
+            el.style.left = cx + 'px';
+            el.style.top = cy + 'px';
+            const angle = (Math.PI * 2 * i) / count + (Math.random()-0.5)*0.4;
+            const dist = 120 + Math.random() * 200;
+            const tx = Math.cos(angle) * dist;
+            const ty = Math.sin(angle) * dist;
+            const rot = (Math.random()-0.5) * 720;
+            const scale = 0.5 + Math.random() * 0.8;
+            const dur = 1.2 + Math.random() * 0.8;
+            el.style.animation = 'none';
+            el.style.animationDuration = dur + 's';
+            // Use custom keyframes via inline style for unique trajectories
+            el.animate([
+                { transform: 'translate(-50%,-50%) rotate(0deg) scale(1)', opacity: 1 },
+                { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) rotate(${rot}deg) scale(${scale})`, opacity: 0 }
+            ], { duration: dur * 1000, easing: 'ease-out', fill: 'forwards' });
+            container.appendChild(el);
+            setTimeout(() => el.remove(), dur * 1000 + 100);
+        }
+    }
+
+    function celebrateWin(container) {
+        launchConfetti(container);
+        launchTileBurst(container);
+        // Second wave of confetti after a beat
+        setTimeout(() => launchConfetti(container), 1200);
+    }
+
     function showActions(actions) {
         const bar = document.getElementById('actionBar');
         bar.innerHTML = '';
@@ -2248,7 +2365,10 @@
     }
 
     function nextRound() {
-        document.getElementById('winOverlay').classList.remove('show');
+        const winOverlay = document.getElementById('winOverlay');
+        winOverlay.classList.remove('show');
+        // Clean up celebration particles
+        winOverlay.querySelectorAll('.confetti, .burst-tile').forEach(el => el.remove());
         document.getElementById('drawOverlay').classList.remove('show');
         socket.emit('nextRound');
     }
@@ -2499,8 +2619,16 @@
         const overlay = document.getElementById('winOverlay');
         overlay.classList.add('show');
 
-        document.getElementById('winTitle').textContent = data.selfDrawn ? 'Self-Drawn!' : 'Mahjong!';
+        const winTitle = document.getElementById('winTitle');
+        if (data.selfDrawn) {
+            winTitle.innerHTML = 'Self-Drawn!<span class="sik-wu">Sik Wu!</span>';
+        } else {
+            winTitle.innerHTML = 'Mahjong!<span class="sik-wu">Sik Wu!</span>';
+        }
         document.getElementById('winnerName').textContent = `${data.winnerName} wins!`;
+
+        // Launch celebration
+        celebrateWin(overlay);
 
         const faanList = document.getElementById('faanList');
         faanList.innerHTML = '';
